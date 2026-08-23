@@ -1,0 +1,27 @@
+{
+  "name": "@pulso/tooling",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Developer tooling for the Pulso multi-repository workspace",
+  "type": "module",
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || ^26.0.0"
+  },
+  "scripts": {
+    "setup": "node src/cli.mjs setup",
+    "doctor": "node src/cli.mjs doctor",
+    "open": "node src/cli.mjs open",
+    "dev": "node src/cli.mjs run dev all",
+    "dev:shell": "node src/cli.mjs run dev shell",
+    "dev:crm": "node src/cli.mjs run dev crm",
+    "dev:projects": "node src/cli.mjs run dev projects",
+    "build": "node src/cli.mjs run build all",
+    "lint": "node src/cli.mjs run lint all",
+    "test": "node --test",
+    "test:apps": "node src/cli.mjs run test all",
+    "e2e": "node src/cli.mjs run e2e all",
+    "format": "node src/cli.mjs run format all",
+    "format:check": "node src/cli.mjs run format:check all",
+    "check": "node src/cli.mjs run check all"
+  }
+}

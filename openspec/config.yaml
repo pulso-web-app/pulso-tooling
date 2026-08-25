@@ -1,0 +1,22 @@
+schema: spec-driven
+
+context: |
+  Language: English
+  All artifacts must be written in English.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Repository: pulso-tooling, a Node-based coordinator for four independent Pulso repositories.
+  Responsibilities: multi-root VS Code workspace, onboarding, diagnostics, aggregate commands, safe generators, process cleanup, and agent configuration.
+  Cross-repository rule: tooling owns the umbrella change; every affected app uses the identical kebab-case ID and owns its behavioral delta.
+  Quality gate: npm run check when sibling repositories are available; local gates are docs, specs, agent drift, and node:test.
+  Safety boundaries: never pull, switch branches, overwrite repositories, hoist dependencies, or replace OpenSpec-owned integrations.
+githubCopilot:
+  cloudAgent: false
+rules:
+  proposal:
+    - Name affected repositories, shared acceptance criteria, sequencing, non-goals, and deployment impact.
+  tasks:
+    - Separate umbrella coordination from repository-owned implementation and validation.
+operations:
+  archive:
+    guidance:
+      - Archive affected application changes before the umbrella change.

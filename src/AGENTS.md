@@ -1,0 +1,9 @@
+# Tooling CLI Rules
+
+- Keep the CLI dependency-light and based on Node standard library APIs unless a reviewed requirement justifies otherwise.
+- Every filesystem mutation must be limited to an explicit repository or generated mirror path.
+- Setup may clone a missing repository and run `npm ci`; it must never pull, checkout, reset, or overwrite an existing directory.
+- Spawn commands with argument arrays, hidden windows where appropriate, and process-tree termination on Windows.
+- Aggregate commands must preserve per-project output and fail when any child fails.
+- Agent synchronization may replace only directories whose names match `pulso-*` inside the two mirror roots. It must preserve all `openspec-*` content.
+- Export deterministic logic for `node:test`; keep process exits and console output at the CLI boundary.

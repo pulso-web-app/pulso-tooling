@@ -1,9 +1,22 @@
 import path from "node:path";
+import os from "node:os";
+import { existsSync } from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 
-import { PROJECTS, TOOLING_ROOT, projectRoot } from "../src/config.mjs";
+import {
+  PROJECT_LIST,
+  PROJECTS,
+  TOOLING_ROOT,
+  projectRoot,
+} from "../src/config.mjs";
+import {
+  checkRepositoryAgentConfiguration,
+  discoverCanonicalSkills,
+  syncRepositorySkills,
+  validateCrossRepositoryChangeId,
+} from "../src/agents.mjs";
 import {
   aggregateExitCodes,
   isPathInside,
@@ -106,4 +119,105 @@ test("workspace referencia somente tasks existentes", async () => {
     JSON.stringify(workspace).includes("nxConsole.nxWorkspacePath"),
     false,
   );
+});
+
+async function createAgentFixture() {
+  const root = await mkdtemp(path.join(os.tmpdir(), "pulso-agent-test-"));
+  const required = [
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+    path.join("docs", "architecture.md"),
+    path.join(".github", "copilot-instructions.md"),
+    path.join(".github", "pull_request_template.md"),
+  ];
+  for (const relative of required) {
+    const target = path.join(root, relative);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, "# Fixture\n");
+  }
+  const skill = path.join(root, ".agents", "skills", "pulso-fixture");
+  await mkdir(skill, { recursive: true });
+  await writeFile(
+    path.join(skill, "SKILL.md"),
+    "---\nname: pulso-fixture\ndescription: Fixture skill used for deterministic mirroring tests.\n---\n\n# Fixture\n",
+  );
+  return root;
+}
+
+test("discovers and deterministically mirrors only Pulso skills", async () => {
+  const root = await createAgentFixture();
+  try {
+    const openspec = path.join(root, ".claude", "skills", "openspec-explore");
+    await mkdir(openspec, { recursive: true });
+    await writeFile(path.join(openspec, "SKILL.md"), "preserve me");
+
+    assert.deepEqual(
+      (await discoverCanonicalSkills(root)).map((skill) => skill.name),
+      ["pulso-fixture"],
+    );
+    await syncRepositorySkills(root);
+    assert.deepEqual(await checkRepositoryAgentConfiguration(root), []);
+    assert.equal(
+      await readFile(path.join(openspec, "SKILL.md"), "utf8"),
+      "preserve me",
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("detects drift and missing agent adapters", async () => {
+  const root = await createAgentFixture();
+  try {
+    await syncRepositorySkills(root);
+    await writeFile(
+      path.join(root, ".claude", "skills", "pulso-fixture", "SKILL.md"),
+      "drift",
+    );
+    await rm(path.join(root, "CLAUDE.md"));
+    const issues = await checkRepositoryAgentConfiguration(root);
+    assert.equal(issues.some((issue) => issue.includes("drift")), true);
+    assert.equal(issues.includes("missing CLAUDE.md"), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("all Pulso repositories contain required documentation and agent files", async () => {
+  const availableRoots = [TOOLING_ROOT, ...PROJECT_LIST.map(projectRoot)].filter(
+    (root) => existsSync(root),
+  );
+  for (const root of availableRoots) {
+    const issues = await checkRepositoryAgentConfiguration(root);
+    assert.deepEqual(issues, [], `${path.basename(root)}: ${issues.join(", ")}`);
+  }
+});
+
+test("validates one kebab-case change ID across repositories", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "pulso-change-test-"));
+  const repositories = [path.join(root, "tooling"), path.join(root, "shell")];
+  try {
+    for (const repository of repositories) {
+      await mkdir(
+        path.join(repository, "openspec", "changes", "shared-contract"),
+        { recursive: true },
+      );
+    }
+    assert.equal(
+      validateCrossRepositoryChangeId("shared-contract", repositories),
+      true,
+    );
+    assert.throws(
+      () => validateCrossRepositoryChangeId("Shared Contract", repositories),
+      /kebab-case/,
+    );
+    assert.throws(
+      () => validateCrossRepositoryChangeId("missing-change", repositories),
+      /missing from/,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

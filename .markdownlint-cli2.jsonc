@@ -1,0 +1,17 @@
+{
+  "config": {
+    "MD013": false,
+    "MD024": { "siblings_only": true },
+    "MD033": false,
+    "MD041": false
+  },
+  "ignores": [
+    ".agents/skills/openspec-*/**",
+    ".claude/**",
+    ".github/skills/openspec-*/**",
+    ".github/prompts/**",
+    "openspec/**",
+    "node_modules/**",
+    "dist/**"
+  ]
+}

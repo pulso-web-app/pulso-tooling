@@ -1,61 +1,145 @@
 # Pulso Tooling
 
-Workspace e automações de desenvolvimento para `pulso-shell`, `pulso-crm` e
-`pulso-projects`. Este repositório não é um workspace Nx e não compartilha
-dependências entre os aplicativos.
+Pulso Tooling is the public developer-experience repository for the Pulso web application. It coordinates four sibling Git repositories without turning their parent directory into an Nx workspace, npm workspace, or shared dependency installation.
 
-## Primeiro uso
+## Repository layout
 
-Clone este repositório dentro de uma pasta `pulso` e execute:
+Clone the repositories as siblings with these exact directory names:
 
-```bash
-npm run setup
-npm run doctor
-npm run open
+```text
+pulso/
+├── pulso-shell/      # Native Federation host, port 4200
+├── pulso-crm/        # CRM remote, port 4201
+├── pulso-projects/   # Projects remote, port 4202
+└── pulso-tooling/    # This repository
 ```
 
-O setup clona somente os repositórios ausentes, confirma os remotes dos
-diretórios existentes e executa `npm ci`. Ele nunca faz `pull`, checkout ou
-sobrescrita de working trees.
+Each application keeps its own Git history, Nx configuration, package lock, `node_modules`, cache, CI, hosting target, and deployment lifecycle.
 
-## Uso no VS Code
+## Fresh onboarding
 
-Abra `pulso.code-workspace` e use `Terminal > Run Task`. As tasks com prefixo
-`Pulso:` permitem subir um ou todos os apps, executar verificações e gerar
-artefatos Angular.
+1. Install Git, npm, VS Code, and Node.js `^22.22.3`, `^24.15.0`, or `^26.0.0`.
+2. Clone this repository into an empty parent directory:
 
-Para gerar código, abra um arquivo na pasta de destino e execute uma das tasks
-de geração. Informe apenas `nome` ou `subpasta/nome`; o tooling aplica o sufixo
-correto e bloqueia caminhos fora de `apps/<app>/src/app`.
+   ```bash
+   git clone https://github.com/pulso-web-app/pulso-tooling.git
+   cd pulso-tooling
+   ```
 
-## Comandos de terminal
+3. Install tooling dependencies:
 
-```bash
-npm run dev            # serve os três apps
-npm run dev:shell      # serve apenas o shell
-npm run dev:crm
-npm run dev:projects
-npm run build
-npm run lint
-npm run test:apps
-npm run e2e
-npm run check
-```
+   ```bash
+   npm ci
+   ```
 
-## Portas
+4. Clone missing application repositories and install each app's dependencies:
 
-| App      | Porta |
-| -------- | ----: |
-| Shell    |  4200 |
-| CRM      |  4201 |
-| Projects |  4202 |
+   ```bash
+   npm run setup
+   ```
 
-## Requisitos
+5. Validate repositories, origins, local dependencies, and ports:
 
-- Git e npm disponíveis no `PATH`.
-- Node `^22.22.3`, `^24.15.0` ou `^26.0.0`.
-- VS Code com as extensões recomendadas pelo workspace.
+   ```bash
+   npm run doctor
+   ```
 
-O Nx Console é útil para explorar projetos e generators. As tasks deste repo
-são a interface estável quando a extensão exibir somente um workspace Nx por
-vez em uma janela multi-root.
+6. Open the multi-root workspace:
+
+   ```bash
+   npm run open
+   ```
+
+7. In VS Code, open **Terminal → Run Task → Pulso: dev all**, then browse to <http://localhost:4200>.
+
+`setup` never pulls, switches branches, resets, or overwrites an existing directory. An unexpected Git origin is reported as an error for the developer to resolve deliberately.
+
+## Public commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm run setup` | Validate prerequisites, clone missing apps, and run `npm ci` in each app. |
+| `npm run doctor` | Check Node, npm, Git, app folders, origins, Nx binaries, and ports 4200–4202. |
+| `npm run open` | Open `pulso.code-workspace`. |
+| `npm run dev` | Serve all three apps concurrently. |
+| `npm run dev:shell` | Serve only the shell. |
+| `npm run dev:crm` | Serve only CRM. |
+| `npm run dev:projects` | Serve only Projects. |
+| `npm run build` | Build all applications. |
+| `npm run lint` | Lint all applications. |
+| `npm run test` | Run tooling's `node:test` suite. |
+| `npm run test:apps` | Run unit tests in all applications. |
+| `npm run e2e` | Run all application E2E suites sequentially to isolate their development servers. |
+| `npm run docs:check` | Validate authored tooling documentation. |
+| `npm run docs:check:apps` | Validate authored documentation in all apps. |
+| `npm run spec:validate` | Strictly validate tooling OpenSpec artifacts. |
+| `npm run spec:validate:apps` | Strictly validate app OpenSpec artifacts. |
+| `npm run agent:sync` | Mirror canonical `pulso-*` Skills in every available sibling repository. |
+| `npm run agent:check` | Detect required-file, adapter, or Skill-mirror drift. |
+| `npm run check` | Run local agent/docs/spec/tests, then each app's full check. |
+
+Aggregate commands keep output identified by repository and return failure when any child fails. Interrupting an aggregate development command propagates termination to descendant processes, including Windows Nx process trees.
+
+## VS Code workspace and tasks
+
+`pulso.code-workspace` opens Shell, CRM, Projects, and Tooling as separate folders and Source Control roots. Recommended extensions include Nx Console, Angular Language Service, ESLint, and Prettier.
+
+The `Pulso:` tasks cover setup, diagnostics, individual or aggregate development servers, termination, build, lint, unit tests, E2E, full checks, documentation validation, specification validation, agent configuration checks, Skill synchronization, and safe Angular generation.
+
+Nx Console remains useful inside an individual repository. If it displays one Nx workspace at a time, use the multi-root tasks for cross-repository workflows.
+
+## Safe Angular generators
+
+Open a file inside an application's `apps/<app>/src/app` tree, then run one of these VS Code tasks:
+
+- `Pulso: generate component here`.
+- `Pulso: generate Angular artifact here`.
+
+The helper asks for a logical name such as `contact-card` or `cards/contact-card`, finds the owning Nx workspace, uses its local Nx binary, and applies that repository's generator defaults. Absolute paths, `..`, paths outside the application source, and duplicate suffixes such as `.component.component.ts` are rejected or normalized safely.
+
+Supported artifacts are component, service, guard, directive, pipe, interceptor, and resolver.
+
+## Agent-ready workflow
+
+`AGENTS.md` is the authoritative instruction layer. Scoped files add rules for the tooling CLI. Canonical Pulso Skills live under `.agents/skills`; `npm run agent:sync` mirrors only names beginning with `pulso-` into `.claude/skills` and `.github/skills`. OpenSpec-managed Skills, commands, and prompts are preserved.
+
+The supported OpenSpec workflow is:
+
+1. Explore existing behavior.
+2. Propose a change.
+3. Obtain human review.
+4. Apply the approved tasks.
+5. Run strict spec validation and repository checks.
+6. Archive the change.
+
+Tool integrations generated by OpenSpec include:
+
+| Tool | Example proposal entry point |
+| --- | --- |
+| Codex | `$openspec-propose` |
+| Claude Code | `/opsx:propose` |
+| GitHub Copilot | `/opsx-propose` |
+
+Use `npm run spec:update` after upgrading OpenSpec rather than editing generated integrations.
+
+## Cross-repository specifications
+
+Choose one kebab-case change ID for the entire effort. Create an umbrella change with that ID in `pulso-tooling`, then create a linked local change with the same ID in every affected application.
+
+- Tooling owns coordination, sequencing, shared acceptance criteria, and cross-repository risks.
+- Each app owns its behavioral requirements, implementation tasks, tests, and deployment impact.
+- Validate each repository independently, archive app changes, then archive the tooling umbrella.
+
+Specifications grow from real changes. The repositories do not attempt to backfill every existing behavior before useful work can continue, and the OpenSpec beta Store is not used.
+
+## Troubleshooting
+
+- **Unexpected origin:** inspect `git remote -v` in the named repository. Tooling will not rewrite it.
+- **Port already in use:** stop the owning task or process, then rerun `npm run doctor`.
+- **A development task leaves processes behind:** use `Pulso: stop all tasks`; if the terminal was killed externally, rerun the doctor and terminate the specific process tree.
+- **Agent Skill drift:** run `npm run agent:sync`, review the generated mirrors, then run `npm run agent:check`.
+- **OpenSpec integration drift:** run `npm run spec:update` in the affected repository.
+- **Generator refuses the active file:** open a file below `apps/<app>/src/app` in Shell, CRM, or Projects.
+- **Playwright browser missing:** run `npm exec playwright install` in the affected app.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architecture.md).

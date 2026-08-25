@@ -19,9 +19,20 @@
     "lint": "node src/cli.mjs run lint all",
     "test": "node --test",
     "test:apps": "node src/cli.mjs run test all",
-    "e2e": "node src/cli.mjs run e2e all",
+    "e2e": "node src/cli.mjs run-sequential e2e all",
     "format": "node src/cli.mjs run format all",
     "format:check": "node src/cli.mjs run format:check all",
-    "check": "node src/cli.mjs run check all"
+    "docs:check": "markdownlint-cli2 README.md AGENTS.md CONTRIBUTING.md CLAUDE.md \"docs/**/*.md\" \"src/**/AGENTS.md\" \".github/*.md\" \".agents/skills/pulso-*/**/*.md\"",
+    "docs:check:apps": "node src/cli.mjs run docs:check all",
+    "spec:validate": "openspec validate --all --strict --no-interactive",
+    "spec:validate:apps": "node src/cli.mjs run spec:validate all",
+    "spec:update": "openspec update",
+    "agent:sync": "node src/cli.mjs agent sync",
+    "agent:check": "node src/cli.mjs agent check",
+    "check": "npm run docs:check && npm run spec:validate && npm run agent:check && npm test && node src/cli.mjs run check all"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "1.10.0",
+    "markdownlint-cli2": "0.23.2"
   }
 }

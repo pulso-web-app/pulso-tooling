@@ -23,6 +23,10 @@ import {
   runCommand,
   selectProjects,
 } from "./lib.mjs";
+import {
+  checkRepositoryAgentConfiguration,
+  syncRepositorySkills,
+} from "./agents.mjs";
 
 const [, , command, ...args] = process.argv;
 
@@ -224,6 +228,19 @@ async function runProjectScript(script, selection) {
   process.exitCode = aggregateExitCodes(codes);
 }
 
+async function runProjectScriptSequentially(script, selection) {
+  const codes = [];
+  for (const project of selectProjects(selection)) {
+    log(`▶ ${project.folder}: npm run ${script}`);
+    const npm = npmInvocation(["run", script]);
+    codes.push(
+      await runCommand(npm.command, npm.args, { cwd: projectRoot(project) }),
+    );
+    if (codes.at(-1) !== 0) break;
+  }
+  process.exitCode = aggregateExitCodes(codes);
+}
+
 async function generate(
   generator,
   rawName,
@@ -278,6 +295,41 @@ async function openWorkspace() {
   log(`Abrindo ${workspace}`);
 }
 
+function availableRepositoryRoots() {
+  return [
+    TOOLING_ROOT,
+    ...PROJECT_LIST.map(projectRoot).filter((root) => existsSync(root)),
+  ];
+}
+
+async function manageAgents(action) {
+  const repositories = availableRepositoryRoots();
+  if (action === "sync") {
+    for (const root of repositories) {
+      const skills = await syncRepositorySkills(root);
+      log(`✓ ${path.basename(root)}: synced ${skills.length} Pulso skill(s)`);
+    }
+    return;
+  }
+
+  if (action === "check") {
+    let hasError = false;
+    for (const root of repositories) {
+      const issues = await checkRepositoryAgentConfiguration(root);
+      if (issues.length) {
+        hasError = true;
+        log(`✗ ${path.basename(root)}: ${issues.join("; ")}`);
+      } else {
+        log(`✓ ${path.basename(root)}: agent configuration is synchronized`);
+      }
+    }
+    if (hasError) process.exitCode = 1;
+    return;
+  }
+
+  fail("Usage: cli.mjs agent <sync|check>");
+}
+
 async function main() {
   switch (command) {
     case "doctor":
@@ -295,6 +347,14 @@ async function main() {
       await runProjectScript(script, selection);
       break;
     }
+    case "run-sequential": {
+      const [script, selection = "all"] = args;
+      if (!script) {
+        fail("Usage: cli.mjs run-sequential <script> [shell|crm|projects|all]");
+      }
+      await runProjectScriptSequentially(script, selection);
+      break;
+    }
     case "generate": {
       const [generator, name, targetDirectory, workspaceDirectory] = args;
       if (!generator || !name || !targetDirectory || !workspaceDirectory) {
@@ -305,8 +365,13 @@ async function main() {
       await generate(generator, name, targetDirectory, workspaceDirectory);
       break;
     }
+    case "agent": {
+      const [action] = args;
+      await manageAgents(action);
+      break;
+    }
     default:
-      fail("Use setup, doctor, open, run ou generate.");
+      fail("Use setup, doctor, open, run, run-sequential, generate or agent.");
   }
 }
 

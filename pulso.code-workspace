@@ -19,6 +19,7 @@
   ],
   "settings": {
     "workbench.editor.labelFormat": "medium",
+    "npm.enableRunFromFolder": true,
   },
   "extensions": {
     "recommendations": [
@@ -32,7 +33,7 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Pulso: setup",
+        "label": "Pulso: Setup",
         "type": "shell",
         "command": "npm",
         "args": ["run", "setup"],
@@ -40,7 +41,7 @@
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: doctor",
+        "label": "Pulso: Doctor",
         "type": "shell",
         "command": "npm",
         "args": ["run", "doctor"],
@@ -48,7 +49,7 @@
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: dev shell",
+        "label": "Pulso: Start Shell",
         "type": "shell",
         "command": "npm",
         "args": ["run", "dev"],
@@ -57,7 +58,7 @@
         "presentation": { "panel": "dedicated", "group": "pulso-dev-shell" },
       },
       {
-        "label": "Pulso: dev CRM",
+        "label": "Pulso: Start CRM",
         "type": "shell",
         "command": "npm",
         "args": ["run", "dev"],
@@ -66,7 +67,7 @@
         "presentation": { "panel": "dedicated", "group": "pulso-dev-crm" },
       },
       {
-        "label": "Pulso: dev projects",
+        "label": "Pulso: Start Projects",
         "type": "shell",
         "command": "npm",
         "args": ["run", "dev"],
@@ -75,95 +76,95 @@
         "presentation": { "panel": "dedicated", "group": "pulso-dev-projects" },
       },
       {
-        "label": "Pulso: dev todos",
+        "label": "Pulso: Start All Apps",
         "dependsOn": [
-          "Pulso: dev shell",
-          "Pulso: dev CRM",
-          "Pulso: dev projects",
+          "Pulso: Start Shell",
+          "Pulso: Start CRM",
+          "Pulso: Start Projects",
         ],
         "dependsOrder": "parallel",
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: encerrar todas as tasks",
+        "label": "Pulso: Stop All Tasks",
         "type": "shell",
         "command": "echo ${input:terminateAll}",
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: build todos",
+        "label": "Pulso: Build All Apps",
         "dependsOn": [
-          "pulso-internal: shell build",
-          "pulso-internal: CRM build",
-          "pulso-internal: projects build",
+          "Pulso Internal: Build Shell",
+          "Pulso Internal: Build CRM",
+          "Pulso Internal: Build Projects",
         ],
         "dependsOrder": "parallel",
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: lint todos",
+        "label": "Pulso: Lint All Apps",
         "dependsOn": [
-          "pulso-internal: shell lint",
-          "pulso-internal: CRM lint",
-          "pulso-internal: projects lint",
+          "Pulso Internal: Lint Shell",
+          "Pulso Internal: Lint CRM",
+          "Pulso Internal: Lint Projects",
         ],
         "dependsOrder": "parallel",
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: testes unitários todos",
+        "label": "Pulso: Test All Apps",
         "dependsOn": [
-          "pulso-internal: shell test",
-          "pulso-internal: CRM test",
-          "pulso-internal: projects test",
+          "Pulso Internal: Test Shell",
+          "Pulso Internal: Test CRM",
+          "Pulso Internal: Test Projects",
         ],
         "dependsOrder": "parallel",
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: E2E todos",
+        "label": "Pulso: Run All E2E Tests",
         "dependsOn": [
-          "pulso-internal: shell e2e",
-          "pulso-internal: CRM e2e",
-          "pulso-internal: projects e2e",
+          "Pulso Internal: Run Shell E2E",
+          "Pulso Internal: Run CRM E2E",
+          "Pulso Internal: Run Projects E2E",
         ],
         "dependsOrder": "sequence",
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: check todos",
+        "label": "Pulso: Check All Apps",
         "dependsOn": [
-          "pulso-internal: shell check",
-          "pulso-internal: CRM check",
-          "pulso-internal: projects check",
+          "Pulso Internal: Check Shell",
+          "Pulso Internal: Check CRM",
+          "Pulso Internal: Check Projects",
         ],
         "dependsOrder": "parallel",
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: validate specs",
+        "label": "Pulso: Validate Specifications",
         "dependsOn": [
-          "pulso-internal: tooling spec validate",
-          "pulso-internal: shell spec validate",
-          "pulso-internal: CRM spec validate",
-          "pulso-internal: projects spec validate",
+          "Pulso Internal: Validate Tooling Specifications",
+          "Pulso Internal: Validate Shell Specifications",
+          "Pulso Internal: Validate CRM Specifications",
+          "Pulso Internal: Validate Projects Specifications",
         ],
         "dependsOrder": "parallel",
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: validate documentation",
+        "label": "Pulso: Validate Documentation",
         "dependsOn": [
-          "pulso-internal: tooling docs check",
-          "pulso-internal: shell docs check",
-          "pulso-internal: CRM docs check",
-          "pulso-internal: projects docs check",
+          "Pulso Internal: Validate Tooling Documentation",
+          "Pulso Internal: Validate Shell Documentation",
+          "Pulso Internal: Validate CRM Documentation",
+          "Pulso Internal: Validate Projects Documentation",
         ],
         "dependsOrder": "parallel",
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: check agent configuration",
+        "label": "Pulso: Check Agent Configuration",
         "type": "shell",
         "command": "npm",
         "args": ["run", "agent:check"],
@@ -171,7 +172,7 @@
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: sync agent skills",
+        "label": "Pulso: Sync Agent Skills",
         "type": "shell",
         "command": "npm",
         "args": ["run", "agent:sync"],
@@ -179,7 +180,7 @@
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: gerar component aqui",
+        "label": "Pulso: Generate Component Here",
         "type": "shell",
         "command": "node",
         "args": [
@@ -194,7 +195,7 @@
         "problemMatcher": [],
       },
       {
-        "label": "Pulso: gerar artefato Angular aqui",
+        "label": "Pulso: Generate Angular Artifact Here",
         "type": "shell",
         "command": "node",
         "args": [
@@ -209,7 +210,7 @@
         "problemMatcher": [],
       },
       {
-        "label": "pulso-internal: shell build",
+        "label": "Pulso Internal: Build Shell",
         "type": "shell",
         "command": "npm",
         "args": ["run", "build"],
@@ -218,7 +219,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: CRM build",
+        "label": "Pulso Internal: Build CRM",
         "type": "shell",
         "command": "npm",
         "args": ["run", "build"],
@@ -227,7 +228,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: projects build",
+        "label": "Pulso Internal: Build Projects",
         "type": "shell",
         "command": "npm",
         "args": ["run", "build"],
@@ -236,7 +237,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: shell lint",
+        "label": "Pulso Internal: Lint Shell",
         "type": "shell",
         "command": "npm",
         "args": ["run", "lint"],
@@ -245,7 +246,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: CRM lint",
+        "label": "Pulso Internal: Lint CRM",
         "type": "shell",
         "command": "npm",
         "args": ["run", "lint"],
@@ -254,7 +255,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: projects lint",
+        "label": "Pulso Internal: Lint Projects",
         "type": "shell",
         "command": "npm",
         "args": ["run", "lint"],
@@ -263,7 +264,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: shell test",
+        "label": "Pulso Internal: Test Shell",
         "type": "shell",
         "command": "npm",
         "args": ["test"],
@@ -272,7 +273,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: CRM test",
+        "label": "Pulso Internal: Test CRM",
         "type": "shell",
         "command": "npm",
         "args": ["test"],
@@ -281,7 +282,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: projects test",
+        "label": "Pulso Internal: Test Projects",
         "type": "shell",
         "command": "npm",
         "args": ["test"],
@@ -290,7 +291,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: shell e2e",
+        "label": "Pulso Internal: Run Shell E2E",
         "type": "shell",
         "command": "npm",
         "args": ["run", "e2e"],
@@ -299,7 +300,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: CRM e2e",
+        "label": "Pulso Internal: Run CRM E2E",
         "type": "shell",
         "command": "npm",
         "args": ["run", "e2e"],
@@ -308,7 +309,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: projects e2e",
+        "label": "Pulso Internal: Run Projects E2E",
         "type": "shell",
         "command": "npm",
         "args": ["run", "e2e"],
@@ -317,7 +318,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: shell check",
+        "label": "Pulso Internal: Check Shell",
         "type": "shell",
         "command": "npm",
         "args": ["run", "check"],
@@ -326,7 +327,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: CRM check",
+        "label": "Pulso Internal: Check CRM",
         "type": "shell",
         "command": "npm",
         "args": ["run", "check"],
@@ -335,7 +336,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: projects check",
+        "label": "Pulso Internal: Check Projects",
         "type": "shell",
         "command": "npm",
         "args": ["run", "check"],
@@ -344,7 +345,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: tooling spec validate",
+        "label": "Pulso Internal: Validate Tooling Specifications",
         "type": "shell",
         "command": "npm",
         "args": ["run", "spec:validate"],
@@ -353,7 +354,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: shell spec validate",
+        "label": "Pulso Internal: Validate Shell Specifications",
         "type": "shell",
         "command": "npm",
         "args": ["run", "spec:validate"],
@@ -362,7 +363,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: CRM spec validate",
+        "label": "Pulso Internal: Validate CRM Specifications",
         "type": "shell",
         "command": "npm",
         "args": ["run", "spec:validate"],
@@ -371,7 +372,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: projects spec validate",
+        "label": "Pulso Internal: Validate Projects Specifications",
         "type": "shell",
         "command": "npm",
         "args": ["run", "spec:validate"],
@@ -380,7 +381,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: tooling docs check",
+        "label": "Pulso Internal: Validate Tooling Documentation",
         "type": "shell",
         "command": "npm",
         "args": ["run", "docs:check"],
@@ -389,7 +390,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: shell docs check",
+        "label": "Pulso Internal: Validate Shell Documentation",
         "type": "shell",
         "command": "npm",
         "args": ["run", "docs:check"],
@@ -398,7 +399,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: CRM docs check",
+        "label": "Pulso Internal: Validate CRM Documentation",
         "type": "shell",
         "command": "npm",
         "args": ["run", "docs:check"],
@@ -407,7 +408,7 @@
         "hide": true,
       },
       {
-        "label": "pulso-internal: projects docs check",
+        "label": "Pulso Internal: Validate Projects Documentation",
         "type": "shell",
         "command": "npm",
         "args": ["run", "docs:check"],
@@ -420,13 +421,13 @@
       {
         "id": "artifactName",
         "type": "promptString",
-        "description": "Nome do artefato (aceita subpasta/nome)",
-        "default": "novo-componente",
+        "description": "Artifact name (supports subfolder/name)",
+        "default": "new-component",
       },
       {
         "id": "artifactKind",
         "type": "pickString",
-        "description": "Tipo de artefato Angular",
+        "description": "Angular artifact type",
         "options": [
           { "label": "Component", "value": "component" },
           { "label": "Service", "value": "service" },

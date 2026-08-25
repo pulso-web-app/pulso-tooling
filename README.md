@@ -50,7 +50,7 @@ Each application keeps its own Git history, Nx configuration, package lock, `nod
    npm run open
    ```
 
-7. In VS Code, open **Terminal → Run Task → Pulso: dev all**, then browse to <http://localhost:4200>.
+7. In VS Code, open **Terminal → Run Task → Pulso: Start All Apps**, then browse to <http://localhost:4200>.
 
 `setup` never pulls, switches branches, resets, or overwrites an existing directory. An unexpected Git origin is reported as an error for the developer to resolve deliberately.
 
@@ -87,6 +87,32 @@ Aggregate commands keep output identified by repository and return failure when 
 The `Pulso:` tasks cover setup, diagnostics, individual or aggregate development servers, termination, build, lint, unit tests, E2E, full checks, documentation validation, specification validation, agent configuration checks, Skill synchronization, and safe Angular generation.
 
 Nx Console remains useful inside an individual repository. If it displays one Nx workspace at a time, use the multi-root tasks for cross-repository workflows.
+
+### Faster task access
+
+The workspace enables VS Code's native **Run NPM Script in Folder...** Explorer action. Use it only on a repository root such as **Shell**, **CRM**, or **Projects**, where a `package.json` exists, to run public `dev`, `check`, `test`, or other npm scripts. It does not generate Angular artifacts and does not work on nested source folders.
+
+For one-keystroke access to the generators, open **Preferences: Open Keyboard Shortcuts (JSON)** from the Command Palette and add entries like these to your user `keybindings.json`:
+
+```json
+{
+  "key": "ctrl+alt+c",
+  "command": "workbench.action.tasks.runTask",
+  "args": "Pulso: Generate Component Here"
+},
+{
+  "key": "ctrl+alt+a",
+  "command": "workbench.action.tasks.runTask",
+  "args": "Pulso: Generate Angular Artifact Here"
+},
+{
+  "key": "ctrl+alt+d",
+  "command": "workbench.action.tasks.runTask",
+  "args": "Pulso: Start All Apps"
+}
+```
+
+Keybindings are VS Code user configuration and cannot be distributed as workspace tasks. Before invoking a generator shortcut, open any file inside the desired `apps/<app>/src/app` target folder; the task uses that active file's directory. A dedicated generator item that receives the selected Explorer folder would require a VS Code extension because workspace tasks have no selected-folder variable.
 
 ## Safe Angular generators
 
@@ -136,7 +162,7 @@ Specifications grow from real changes. The repositories do not attempt to backfi
 
 - **Unexpected origin:** inspect `git remote -v` in the named repository. Tooling will not rewrite it.
 - **Port already in use:** stop the owning task or process, then rerun `npm run doctor`.
-- **A development task leaves processes behind:** use `Pulso: stop all tasks`; if the terminal was killed externally, rerun the doctor and terminate the specific process tree.
+- **A development task leaves processes behind:** use `Pulso: Stop All Tasks`; if the terminal was killed externally, rerun the doctor and terminate the specific process tree.
 - **Agent Skill drift:** run `npm run agent:sync`, review the generated mirrors, then run `npm run agent:check`.
 - **OpenSpec integration drift:** run `npm run spec:update` in the affected repository.
 - **Generator refuses the active file:** open a file below `apps/<app>/src/app` in Shell, CRM, or Projects.

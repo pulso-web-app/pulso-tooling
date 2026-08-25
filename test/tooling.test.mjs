@@ -18,6 +18,7 @@ import {
   validateCrossRepositoryChangeId,
 } from "../src/agents.mjs";
 import {
+  aggregateChildEnvironment,
   aggregateExitCodes,
   isPathInside,
   isSupportedNodeVersion,
@@ -139,6 +140,20 @@ test("aggregates exit codes from multiple projects", () => {
   assert.equal(aggregateExitCodes([0, 1, 0]), 1);
 });
 
+test("removes NO_COLOR from aggregate child environments", () => {
+  const source = {
+    FORCE_COLOR: "1",
+    NO_COLOR: "1",
+    PULSO_FIXTURE: "preserved",
+  };
+
+  assert.deepEqual(aggregateChildEnvironment(source), {
+    FORCE_COLOR: "1",
+    PULSO_FIXTURE: "preserved",
+  });
+  assert.equal(source.NO_COLOR, "1");
+});
+
 test("references only existing workspace tasks and safe generator commands", async () => {
   const workspaceSource = await readFile(
     path.join(TOOLING_ROOT, "pulso.code-workspace"),
@@ -149,7 +164,11 @@ test("references only existing workspace tasks and safe generator commands", asy
 
   for (const task of workspace.tasks.tasks) {
     for (const dependency of task.dependsOn ?? []) {
-      assert.equal(labels.has(dependency), true, `${dependency} does not exist`);
+      assert.equal(
+        labels.has(dependency),
+        true,
+        `${dependency} does not exist`,
+      );
     }
   }
 
@@ -240,7 +259,10 @@ test("detects drift and missing agent adapters", async () => {
     );
     await rm(path.join(root, "CLAUDE.md"));
     const issues = await checkRepositoryAgentConfiguration(root);
-    assert.equal(issues.some((issue) => issue.includes("drift")), true);
+    assert.equal(
+      issues.some((issue) => issue.includes("drift")),
+      true,
+    );
     assert.equal(issues.includes("missing CLAUDE.md"), true);
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -248,12 +270,17 @@ test("detects drift and missing agent adapters", async () => {
 });
 
 test("all Pulso repositories contain required documentation and agent files", async () => {
-  const availableRoots = [TOOLING_ROOT, ...PROJECT_LIST.map(projectRoot)].filter(
-    (root) => existsSync(root),
-  );
+  const availableRoots = [
+    TOOLING_ROOT,
+    ...PROJECT_LIST.map(projectRoot),
+  ].filter((root) => existsSync(root));
   for (const root of availableRoots) {
     const issues = await checkRepositoryAgentConfiguration(root);
-    assert.deepEqual(issues, [], `${path.basename(root)}: ${issues.join(", ")}`);
+    assert.deepEqual(
+      issues,
+      [],
+      `${path.basename(root)}: ${issues.join(", ")}`,
+    );
   }
 });
 

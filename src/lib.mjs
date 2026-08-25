@@ -57,9 +57,7 @@ export function normalizeArtifactName(rawName, generator) {
   }
 
   if (path.posix.isAbsolute(value) || path.win32.isAbsolute(value)) {
-    throw new Error(
-      "Use a name or relative path, never an absolute path.",
-    );
+    throw new Error("Use a name or relative path, never an absolute path.");
   }
 
   const segments = value.split("/");
@@ -143,6 +141,12 @@ export function resolveGeneratorContext(targetDirectory, workspaceDirectory) {
 
 export function aggregateExitCodes(codes) {
   return codes.every((code) => code === 0) ? 0 : 1;
+}
+
+export function aggregateChildEnvironment(environment = process.env) {
+  const childEnvironment = { ...environment };
+  delete childEnvironment.NO_COLOR;
+  return childEnvironment;
 }
 
 export function commandForPlatform(command) {

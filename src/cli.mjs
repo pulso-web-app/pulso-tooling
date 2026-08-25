@@ -14,6 +14,7 @@ import {
   projectRoot,
 } from "./config.mjs";
 import {
+  aggregateChildEnvironment,
   aggregateExitCodes,
   isPortAvailable,
   isSupportedNodeVersion,
@@ -60,9 +61,7 @@ async function capture(commandName, commandArgs, options = {}) {
         resolve(stdout.trim());
       } else {
         reject(
-          new Error(
-            stderr.trim() || `${commandName} exited with code ${code}`,
-          ),
+          new Error(stderr.trim() || `${commandName} exited with code ${code}`),
         );
       }
     });
@@ -202,6 +201,7 @@ async function runProjectScript(script, selection) {
     const npm = npmInvocation(["run", script]);
     return spawn(npm.command, npm.args, {
       cwd: projectRoot(project),
+      env: aggregateChildEnvironment(),
       stdio: "inherit",
       windowsHide: true,
       detached: process.platform !== "win32",
@@ -235,7 +235,10 @@ async function runProjectScriptSequentially(script, selection) {
     log(`▶ ${project.folder}: npm run ${script}`);
     const npm = npmInvocation(["run", script]);
     codes.push(
-      await runCommand(npm.command, npm.args, { cwd: projectRoot(project) }),
+      await runCommand(npm.command, npm.args, {
+        cwd: projectRoot(project),
+        env: aggregateChildEnvironment(),
+      }),
     );
     if (codes.at(-1) !== 0) break;
   }
@@ -388,9 +391,7 @@ async function main() {
     case "generate-selected": {
       const [generator, targetDirectory] = args;
       if (!generator || !targetDirectory) {
-        fail(
-          "Usage: cli.mjs generate-selected <generator> <selected-path>",
-        );
+        fail("Usage: cli.mjs generate-selected <generator> <selected-path>");
       }
       await generateFromSelectedResource(generator, targetDirectory);
       break;

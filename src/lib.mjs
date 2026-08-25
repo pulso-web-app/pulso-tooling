@@ -88,17 +88,20 @@ export function isPathInside(candidate, parent) {
   );
 }
 
-export function resolveGeneratorContext(targetDirectory, workspaceDirectory) {
-  const selected = path.resolve(targetDirectory);
-  let target = selected;
+export function resolveSelectedTarget(targetPath) {
+  const selected = path.resolve(targetPath);
 
   try {
-    if (statSync(selected).isFile()) {
-      target = path.dirname(selected);
-    }
+    return statSync(selected).isFile() ? path.dirname(selected) : selected;
   } catch {
     // Nx can create a missing final directory from a valid logical name.
+    return selected;
   }
+}
+
+export function resolveGeneratorContext(targetDirectory, workspaceDirectory) {
+  const selected = path.resolve(targetDirectory);
+  const target = resolveSelectedTarget(selected);
 
   let project;
   let workspace;

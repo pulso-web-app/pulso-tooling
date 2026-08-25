@@ -24,9 +24,10 @@ import {
   normalizeArtifactName,
   repositoryMatches,
   resolveGeneratorContext,
+  resolveSelectedTarget,
 } from "../src/lib.mjs";
 
-test("aceita somente as faixas de Node suportadas pelo Angular 22", () => {
+test("accepts only the Node.js ranges supported by Angular 22", () => {
   assert.equal(isSupportedNodeVersion("v22.22.3"), true);
   assert.equal(isSupportedNodeVersion("24.15.0"), true);
   assert.equal(isSupportedNodeVersion("v26.0.0"), true);
@@ -35,7 +36,7 @@ test("aceita somente as faixas de Node suportadas pelo Angular 22", () => {
   assert.equal(isSupportedNodeVersion("v25.0.0"), false);
 });
 
-test("normaliza URLs HTTPS e SSH do mesmo repositório", () => {
+test("matches HTTPS and SSH URLs for the same repository", () => {
   assert.equal(
     repositoryMatches(
       "git@github.com:pulso-web-app/pulso-shell.git",
@@ -52,7 +53,7 @@ test("normaliza URLs HTTPS e SSH do mesmo repositório", () => {
   );
 });
 
-test("remove extensão e sufixo duplicado do artefato", () => {
+test("removes TypeScript extensions and duplicate artifact suffixes", () => {
   assert.equal(normalizeArtifactName("card.component.ts", "component"), "card");
   assert.equal(
     normalizeArtifactName("cards/contact-card.component", "component"),
@@ -61,7 +62,7 @@ test("remove extensão e sufixo duplicado do artefato", () => {
   assert.equal(normalizeArtifactName("auth.service", "service"), "auth");
 });
 
-test("rejeita paths absolutos e travessia de diretórios", () => {
+test("rejects absolute paths and directory traversal", () => {
   assert.throws(
     () => normalizeArtifactName("../card", "component"),
     /cannot contain/,
@@ -76,7 +77,7 @@ test("rejeita paths absolutos e travessia de diretórios", () => {
   );
 });
 
-test("restringe geração ao sourceRoot do app correspondente", () => {
+test("restricts generation to the matching application source root", () => {
   const shellRoot = projectRoot(PROJECTS.shell);
   const validTarget = path.join(
     shellRoot,
@@ -115,30 +116,30 @@ test("infers the owning workspace from an Explorer folder selection", () => {
   assert.equal(context.target, selectedFolder);
 });
 
-test("uses the parent directory when an Explorer file is selected", () => {
-  const crmRoot = projectRoot(PROJECTS.crm);
-  const selectedFile = path.join(
-    crmRoot,
-    "apps",
-    "crm",
-    "src",
-    "app",
-    "app.ts",
-  );
+test("resolves Explorer files to their parent directory", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "pulso-target-test-"));
+  const selectedFile = path.join(root, "feature.ts");
 
-  assert.equal(existsSync(selectedFile), true, "CRM app.ts fixture is missing");
-  const context = resolveGeneratorContext(selectedFile);
+  try {
+    await writeFile(selectedFile, "export {};\n");
 
-  assert.equal(context.project.key, "crm");
-  assert.equal(context.target, path.dirname(selectedFile));
+    assert.equal(resolveSelectedTarget(selectedFile), root);
+    assert.equal(resolveSelectedTarget(root), root);
+    assert.equal(
+      resolveSelectedTarget(path.join(root, "future-directory")),
+      path.join(root, "future-directory"),
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
-test("agrega códigos de saída de múltiplos projetos", () => {
+test("aggregates exit codes from multiple projects", () => {
   assert.equal(aggregateExitCodes([0, 0, 0]), 0);
   assert.equal(aggregateExitCodes([0, 1, 0]), 1);
 });
 
-test("workspace referencia somente tasks existentes", async () => {
+test("references only existing workspace tasks and safe generator commands", async () => {
   const workspaceSource = await readFile(
     path.join(TOOLING_ROOT, "pulso.code-workspace"),
     "utf8",
@@ -148,7 +149,7 @@ test("workspace referencia somente tasks existentes", async () => {
 
   for (const task of workspace.tasks.tasks) {
     for (const dependency of task.dependsOn ?? []) {
-      assert.equal(labels.has(dependency), true, `${dependency} não existe`);
+      assert.equal(labels.has(dependency), true, `${dependency} does not exist`);
     }
   }
 
@@ -158,18 +159,20 @@ test("workspace referencia somente tasks existentes", async () => {
   );
 
   const commands = workspace.settings["command-runner.commands"];
-  assert.deepEqual(Object.keys(commands), [
-    "Pulso: Generate Component Here",
-    "Pulso: Generate Service Here",
-    "Pulso: Generate Guard Here",
-    "Pulso: Generate Directive Here",
-    "Pulso: Generate Pipe Here",
-    "Pulso: Generate Interceptor Here",
-    "Pulso: Generate Resolver Here",
-  ]);
-  for (const command of Object.values(commands)) {
+  const expectedGenerators = {
+    "Pulso: Generate Component Here": "component",
+    "Pulso: Generate Service Here": "service",
+    "Pulso: Generate Guard Here": "guard",
+    "Pulso: Generate Directive Here": "directive",
+    "Pulso: Generate Pipe Here": "pipe",
+    "Pulso: Generate Interceptor Here": "interceptor",
+    "Pulso: Generate Resolver Here": "resolver",
+  };
+  assert.deepEqual(Object.keys(commands), Object.keys(expectedGenerators));
+  for (const [label, generator] of Object.entries(expectedGenerators)) {
+    const command = commands[label];
     assert.match(command, /\$\{selectedFile\}/);
-    assert.match(command, /generate-selected/);
+    assert.match(command, new RegExp(`generate-selected ${generator}`));
     assert.doesNotMatch(command, /\$\{input\}/);
   }
   assert.equal(

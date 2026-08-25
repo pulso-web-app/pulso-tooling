@@ -197,7 +197,7 @@ export function selectProjects(selection) {
   const project = PROJECTS[selection];
   if (!project) {
     throw new Error(
-      `Projeto inválido: ${selection}. Use shell, crm, projects ou all.`,
+      `Invalid project: ${selection}. Use shell, crm, projects, or all.`,
     );
   }
 

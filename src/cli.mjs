@@ -61,7 +61,7 @@ async function capture(commandName, commandArgs, options = {}) {
       } else {
         reject(
           new Error(
-            stderr.trim() || `${commandName} encerrou com código ${code}`,
+            stderr.trim() || `${commandName} exited with code ${code}`,
           ),
         );
       }
@@ -72,7 +72,7 @@ async function capture(commandName, commandArgs, options = {}) {
 async function requireSupportedNode() {
   if (!isSupportedNodeVersion(process.version)) {
     fail(
-      `Node ${process.version} não é suportado. Use ^22.22.3, ^24.15.0 ou ^26.0.0.`,
+      `Node ${process.version} is not supported. Use ^22.22.3, ^24.15.0, or ^26.0.0.`,
     );
   }
 }
@@ -88,7 +88,7 @@ async function assertRepository(project) {
   ]);
   if (!repositoryMatches(origin, project.repository)) {
     fail(
-      `${project.folder}: origin inesperado (${origin}). Esperado: ${project.repository}`,
+      `${project.folder}: unexpected origin (${origin}). Expected: ${project.repository}`,
     );
   }
 }
@@ -118,11 +118,11 @@ async function doctor() {
         process.platform === "win32" ? "nx.cmd" : "nx",
       );
       const dependencies = existsSync(nxBinary)
-        ? "dependências instaladas"
-        : "execute npm run setup";
+        ? "dependencies installed"
+        : "run npm run setup";
       const portStatus = (await isPortAvailable(project.port))
-        ? `porta ${project.port} livre`
-        : `porta ${project.port} em uso`;
+        ? `port ${project.port} available`
+        : `port ${project.port} in use`;
       log(`✓ ${project.folder}: ${dependencies}; ${portStatus}`);
     } catch (error) {
       hasError = true;
@@ -144,35 +144,35 @@ async function setup() {
   for (const project of PROJECT_LIST) {
     const root = projectRoot(project);
     if (!existsSync(root)) {
-      log(`Clonando ${project.folder}...`);
+      log(`Cloning ${project.folder}...`);
       const cloneCode = await runCommand(
         "git",
         ["clone", project.repository, project.folder],
         { cwd: PULSO_ROOT },
       );
       if (cloneCode !== 0) {
-        fail(`Não foi possível clonar ${project.folder}.`);
+        fail(`Could not clone ${project.folder}.`);
       }
     } else {
       await assertRepository(project);
       log(
-        `✓ ${project.folder} já existe; nenhum pull ou checkout será executado.`,
+        `✓ ${project.folder} already exists; no pull or checkout will be performed.`,
       );
     }
   }
 
   for (const project of PROJECT_LIST) {
-    log(`\nInstalando dependências de ${project.folder}...`);
+    log(`\nInstalling dependencies for ${project.folder}...`);
     const npm = npmInvocation(["ci"]);
     const installCode = await runCommand(npm.command, npm.args, {
       cwd: projectRoot(project),
     });
     if (installCode !== 0) {
-      fail(`npm ci falhou em ${project.folder}.`);
+      fail(`npm ci failed for ${project.folder}.`);
     }
   }
 
-  log("\nSetup concluído. Execute npm run doctor e npm run open.");
+  log("\nSetup complete. Run npm run doctor and npm run open.");
 }
 
 function terminateProcessTree(child) {
@@ -310,7 +310,7 @@ async function openWorkspace() {
     windowsHide: true,
   });
   child.unref();
-  log(`Abrindo ${workspace}`);
+  log(`Opening ${workspace}`);
 }
 
 function availableRepositoryRoots() {
@@ -361,7 +361,9 @@ async function main() {
       break;
     case "run": {
       const [script, selection = "all"] = args;
-      if (!script) fail("Uso: cli.mjs run <script> [shell|crm|projects|all]");
+      if (!script) {
+        fail("Usage: cli.mjs run <script> [shell|crm|projects|all]");
+      }
       await runProjectScript(script, selection);
       break;
     }

@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { access } from "node:fs/promises";
 import path from "node:path";
+import { createInterface } from "node:readline/promises";
 
 import {
   GENERATORS,
@@ -248,7 +249,7 @@ async function generate(
   workspaceDirectory,
 ) {
   if (!GENERATORS.includes(generator)) {
-    fail(`Generator inválido. Use: ${GENERATORS.join(", ")}.`);
+    fail(`Unsupported generator. Use: ${GENERATORS.join(", ")}.`);
   }
 
   const name = normalizeArtifactName(rawName, generator);
@@ -264,17 +265,34 @@ async function generate(
 
   if (!existsSync(nxCli)) {
     fail(
-      `Nx local não encontrado em ${context.project.folder}. Execute npm run setup.`,
+      `Local Nx was not found in ${context.project.folder}. Run npm run setup.`,
     );
   }
 
-  log(`Gerando ${generator} em ${context.target}`);
+  log(`Generating ${generator} in ${context.target}`);
   const exitCode = await runCommand(
     process.execPath,
     [nxCli, "generate", `@nx/angular:${generator}`, name, "--no-interactive"],
     { cwd: context.target },
   );
   process.exitCode = exitCode;
+}
+
+async function generateFromSelectedResource(generator, targetDirectory) {
+  const prompt = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  let name;
+  try {
+    name = await prompt.question(
+      `Artifact name for ${generator} (supports subfolder/name): `,
+    );
+  } finally {
+    prompt.close();
+  }
+
+  await generate(generator, name, targetDirectory);
 }
 
 async function openWorkspace() {
@@ -357,12 +375,22 @@ async function main() {
     }
     case "generate": {
       const [generator, name, targetDirectory, workspaceDirectory] = args;
-      if (!generator || !name || !targetDirectory || !workspaceDirectory) {
+      if (!generator || !name || !targetDirectory) {
         fail(
-          "Uso: cli.mjs generate <generator> <nome> <diretório> <workspace>",
+          "Usage: cli.mjs generate <generator> <name> <selected-path> [workspace]",
         );
       }
       await generate(generator, name, targetDirectory, workspaceDirectory);
+      break;
+    }
+    case "generate-selected": {
+      const [generator, targetDirectory] = args;
+      if (!generator || !targetDirectory) {
+        fail(
+          "Usage: cli.mjs generate-selected <generator> <selected-path>",
+        );
+      }
+      await generateFromSelectedResource(generator, targetDirectory);
       break;
     }
     case "agent": {
@@ -371,11 +399,13 @@ async function main() {
       break;
     }
     default:
-      fail("Use setup, doctor, open, run, run-sequential, generate or agent.");
+      fail(
+        "Use setup, doctor, open, run, run-sequential, generate, generate-selected, or agent.",
+      );
   }
 }
 
 main().catch((error) => {
-  process.stderr.write(`\nErro: ${error.message}\n`);
+  process.stderr.write(`\nError: ${error.message}\n`);
   process.exitCode = 1;
 });

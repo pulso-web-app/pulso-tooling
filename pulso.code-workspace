@@ -20,6 +20,20 @@
   "settings": {
     "workbench.editor.labelFormat": "medium",
     "npm.enableRunFromFolder": true,
+    "command-runner.terminal.name": "Pulso Generators",
+    "command-runner.terminal.autoClear": false,
+    "command-runner.terminal.autoFocus": true,
+    "command-runner.showRunCommandInEditorContextMenu": false,
+    "command-runner.showRunCommandInExplorerContextMenu": true,
+    "command-runner.commands": {
+      "Pulso: Generate Component Here": "node \"${workspaceFolder}/../pulso-tooling/src/cli.mjs\" generate-selected component ${selectedFile}",
+      "Pulso: Generate Service Here": "node \"${workspaceFolder}/../pulso-tooling/src/cli.mjs\" generate-selected service ${selectedFile}",
+      "Pulso: Generate Guard Here": "node \"${workspaceFolder}/../pulso-tooling/src/cli.mjs\" generate-selected guard ${selectedFile}",
+      "Pulso: Generate Directive Here": "node \"${workspaceFolder}/../pulso-tooling/src/cli.mjs\" generate-selected directive ${selectedFile}",
+      "Pulso: Generate Pipe Here": "node \"${workspaceFolder}/../pulso-tooling/src/cli.mjs\" generate-selected pipe ${selectedFile}",
+      "Pulso: Generate Interceptor Here": "node \"${workspaceFolder}/../pulso-tooling/src/cli.mjs\" generate-selected interceptor ${selectedFile}",
+      "Pulso: Generate Resolver Here": "node \"${workspaceFolder}/../pulso-tooling/src/cli.mjs\" generate-selected resolver ${selectedFile}",
+    },
   },
   "extensions": {
     "recommendations": [
@@ -27,6 +41,7 @@
       "angular.ng-template",
       "dbaeumer.vscode-eslint",
       "esbenp.prettier-vscode",
+      "edonet.vscode-command-runner",
     ],
   },
   "tasks": {

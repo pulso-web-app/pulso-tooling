@@ -82,17 +82,19 @@ Aggregate commands keep output identified by repository and return failure when 
 
 ## VS Code workspace and tasks
 
-`pulso.code-workspace` opens Shell, CRM, Projects, and Tooling as separate folders and Source Control roots. Recommended extensions include Nx Console, Angular Language Service, ESLint, and Prettier.
+`pulso.code-workspace` opens Shell, CRM, Projects, and Tooling as separate folders and Source Control roots. Recommended extensions include Nx Console, Angular Language Service, ESLint, Prettier, and [Command Runner](https://marketplace.visualstudio.com/items?itemName=edonet.vscode-command-runner).
 
 The `Pulso:` tasks cover setup, diagnostics, individual or aggregate development servers, termination, build, lint, unit tests, E2E, full checks, documentation validation, specification validation, agent configuration checks, Skill synchronization, and safe Angular generation.
 
 Nx Console remains useful inside an individual repository. If it displays one Nx workspace at a time, use the multi-root tasks for cross-repository workflows.
 
-### Faster task access
+### Faster command access
 
 The workspace enables VS Code's native **Run NPM Script in Folder...** Explorer action. Use it only on a repository root such as **Shell**, **CRM**, or **Projects**, where a `package.json` exists, to run public `dev`, `check`, `test`, or other npm scripts. It does not generate Angular artifacts and does not work on nested source folders.
 
-For one-keystroke access to the generators, open **Preferences: Open Keyboard Shortcuts (JSON)** from the Command Palette and add entries like these to your user `keybindings.json`:
+Angular generators use Command Runner and the selected Explorer resource. See [Safe Angular generators](#safe-angular-generators) for the primary context-menu workflow.
+
+Native tasks remain available as a fallback and can have user-level shortcuts. Open **Preferences: Open Keyboard Shortcuts (JSON)** from the Command Palette and add entries like these to your `keybindings.json`:
 
 ```json
 {
@@ -112,18 +114,22 @@ For one-keystroke access to the generators, open **Preferences: Open Keyboard Sh
 }
 ```
 
-Keybindings are VS Code user configuration and cannot be distributed as workspace tasks. Before invoking a generator shortcut, open any file inside the desired `apps/<app>/src/app` target folder; the task uses that active file's directory. A dedicated generator item that receives the selected Explorer folder would require a VS Code extension because workspace tasks have no selected-folder variable.
+Keybindings are VS Code user configuration and cannot be distributed as workspace tasks. The generator tasks use the active file's directory, while the Command Runner workflow uses the resource selected in the Explorer.
 
 ## Safe Angular generators
 
-Open a file inside an application's `apps/<app>/src/app` tree, then run one of these VS Code tasks:
+Install the recommended Command Runner extension, reload VS Code, and use this primary workflow:
 
-- `Pulso: generate component here`.
-- `Pulso: generate Angular artifact here`.
+1. Right-click a folder or file inside an application's `apps/<app>/src/app` tree.
+2. Select **Run Command**.
+3. Choose one of the predefined `Pulso: Generate ... Here` commands.
+4. Enter the logical artifact name in the **Pulso Generators** terminal and press Enter.
 
-The helper asks for a logical name such as `contact-card` or `cards/contact-card`, finds the owning Nx workspace, uses its local Nx binary, and applies that repository's generator defaults. Absolute paths, `..`, paths outside the application source, and duplicate suffixes such as `.component.component.ts` are rejected or normalized safely.
+If a file is selected, its parent folder is used. The helper accepts a logical name such as `contact-card` or `cards/contact-card`, finds the owning Nx workspace from the selected resource, uses its local Nx binary, and applies that repository's generator defaults. Absolute paths, `..`, paths outside the application source, and duplicate suffixes such as `.component.component.ts` are rejected or normalized safely.
 
-Supported artifacts are component, service, guard, directive, pipe, interceptor, and resolver.
+The predefined commands support component, service, guard, directive, pipe, interceptor, and resolver. The original native tasks, `Pulso: Generate Component Here` and `Pulso: Generate Angular Artifact Here`, remain available through **Tasks: Run Task** and use the active file as their target.
+
+Command Runner executes configured terminal commands by design. Use these entries only from a trusted Pulso workspace and review any future command changes before accepting them.
 
 ## Agent-ready workflow
 
@@ -165,7 +171,9 @@ Specifications grow from real changes. The repositories do not attempt to backfi
 - **A development task leaves processes behind:** use `Pulso: Stop All Tasks`; if the terminal was killed externally, rerun the doctor and terminate the specific process tree.
 - **Agent Skill drift:** run `npm run agent:sync`, review the generated mirrors, then run `npm run agent:check`.
 - **OpenSpec integration drift:** run `npm run spec:update` in the affected repository.
-- **Generator refuses the active file:** open a file below `apps/<app>/src/app` in Shell, CRM, or Projects.
+- **Run Command is missing:** confirm `edonet.vscode-command-runner` is enabled, then run **Developer: Reload Window**.
+- **Pulso generator commands are missing:** reopen `pulso.code-workspace`; opening one repository alone does not load the shared workspace settings.
+- **Generator refuses the selected resource:** select a folder or file below `apps/<app>/src/app` in Shell, CRM, or Projects.
 - **Playwright browser missing:** run `npm exec playwright install` in the affected app.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architecture.md).

@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { statSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 
@@ -9,7 +10,7 @@ export function parseVersion(version) {
     .trim()
     .match(/^v?(\d+)\.(\d+)\.(\d+)/);
   if (!match) {
-    throw new Error(`Versão inválida do Node: ${version}`);
+    throw new Error(`Invalid Node version: ${version}`);
   }
 
   return match.slice(1).map(Number);
@@ -45,19 +46,19 @@ export function repositoryMatches(actual, expected) {
 
 export function normalizeArtifactName(rawName, generator) {
   if (!GENERATORS.includes(generator)) {
-    throw new Error(`Generator não suportado: ${generator}`);
+    throw new Error(`Unsupported generator: ${generator}`);
   }
 
   const value = String(rawName ?? "")
     .trim()
     .replaceAll("\\", "/");
   if (!value) {
-    throw new Error("Informe o nome do artefato.");
+    throw new Error("Enter an artifact name.");
   }
 
   if (path.posix.isAbsolute(value) || path.win32.isAbsolute(value)) {
     throw new Error(
-      "Use um nome ou caminho relativo, nunca um caminho absoluto.",
+      "Use a name or relative path, never an absolute path.",
     );
   }
 
@@ -65,7 +66,7 @@ export function normalizeArtifactName(rawName, generator) {
   if (
     segments.some((segment) => !segment || segment === "." || segment === "..")
   ) {
-    throw new Error('O nome não pode conter segmentos vazios, "." ou "..".');
+    throw new Error('The name cannot contain empty, ".", or ".." segments.');
   }
 
   let fileName = segments.at(-1).replace(/\.ts$/i, "");
@@ -73,7 +74,7 @@ export function normalizeArtifactName(rawName, generator) {
   fileName = fileName.replace(suffix, "");
 
   if (!fileName) {
-    throw new Error("O nome do artefato ficou vazio após a normalização.");
+    throw new Error("The artifact name is empty after normalization.");
   }
 
   return [...segments.slice(0, -1), fileName].join("/");
@@ -88,15 +89,35 @@ export function isPathInside(candidate, parent) {
 }
 
 export function resolveGeneratorContext(targetDirectory, workspaceDirectory) {
-  const workspace = path.resolve(workspaceDirectory);
-  const target = path.resolve(targetDirectory);
-  const project = PROJECT_LIST.find(
-    (entry) => path.resolve(projectRoot(entry)) === workspace,
-  );
+  const selected = path.resolve(targetDirectory);
+  let target = selected;
 
-  if (!project) {
+  try {
+    if (statSync(selected).isFile()) {
+      target = path.dirname(selected);
+    }
+  } catch {
+    // Nx can create a missing final directory from a valid logical name.
+  }
+
+  let project;
+  let workspace;
+
+  if (workspaceDirectory) {
+    workspace = path.resolve(workspaceDirectory);
+    project = PROJECT_LIST.find(
+      (entry) => path.resolve(projectRoot(entry)) === workspace,
+    );
+  } else {
+    project = PROJECT_LIST.find((entry) =>
+      isPathInside(selected, projectRoot(entry)),
+    );
+    workspace = project ? path.resolve(projectRoot(project)) : undefined;
+  }
+
+  if (!project || !workspace) {
     throw new Error(
-      "O arquivo ativo não pertence a pulso-shell, pulso-crm ou pulso-projects.",
+      "The selected resource does not belong to pulso-shell, pulso-crm, or pulso-projects.",
     );
   }
 
@@ -110,7 +131,7 @@ export function resolveGeneratorContext(targetDirectory, workspaceDirectory) {
 
   if (!isPathInside(target, appSource)) {
     throw new Error(
-      `Abra um arquivo dentro de apps/${project.nxProject}/src/app antes de gerar o artefato.`,
+      `Select a folder or file inside apps/${project.nxProject}/src/app before generating an artifact.`,
     );
   }
 

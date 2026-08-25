@@ -64,15 +64,15 @@ test("remove extensão e sufixo duplicado do artefato", () => {
 test("rejeita paths absolutos e travessia de diretórios", () => {
   assert.throws(
     () => normalizeArtifactName("../card", "component"),
-    /não pode conter/,
+    /cannot contain/,
   );
   assert.throws(
     () => normalizeArtifactName("C:\\temp\\card", "component"),
-    /absoluto/,
+    /absolute/,
   );
   assert.throws(
     () => normalizeArtifactName("/tmp/card", "component"),
-    /absoluto/,
+    /absolute/,
   );
 });
 
@@ -92,8 +92,45 @@ test("restringe geração ao sourceRoot do app correspondente", () => {
 
   assert.throws(
     () => resolveGeneratorContext(path.join(shellRoot, "tools"), shellRoot),
-    /Abra um arquivo dentro/,
+    /Select a folder or file inside/,
   );
+});
+
+test("infers the owning workspace from an Explorer folder selection", () => {
+  const crmRoot = projectRoot(PROJECTS.crm);
+  const selectedFolder = path.join(
+    crmRoot,
+    "apps",
+    "crm",
+    "src",
+    "app",
+    "features",
+    "contacts",
+  );
+
+  const context = resolveGeneratorContext(selectedFolder);
+
+  assert.equal(context.project.key, "crm");
+  assert.equal(context.workspace, crmRoot);
+  assert.equal(context.target, selectedFolder);
+});
+
+test("uses the parent directory when an Explorer file is selected", () => {
+  const crmRoot = projectRoot(PROJECTS.crm);
+  const selectedFile = path.join(
+    crmRoot,
+    "apps",
+    "crm",
+    "src",
+    "app",
+    "app.ts",
+  );
+
+  assert.equal(existsSync(selectedFile), true, "CRM app.ts fixture is missing");
+  const context = resolveGeneratorContext(selectedFile);
+
+  assert.equal(context.project.key, "crm");
+  assert.equal(context.target, path.dirname(selectedFile));
 });
 
 test("agrega códigos de saída de múltiplos projetos", () => {
@@ -118,6 +155,28 @@ test("workspace referencia somente tasks existentes", async () => {
   assert.equal(
     JSON.stringify(workspace).includes("nxConsole.nxWorkspacePath"),
     false,
+  );
+
+  const commands = workspace.settings["command-runner.commands"];
+  assert.deepEqual(Object.keys(commands), [
+    "Pulso: Generate Component Here",
+    "Pulso: Generate Service Here",
+    "Pulso: Generate Guard Here",
+    "Pulso: Generate Directive Here",
+    "Pulso: Generate Pipe Here",
+    "Pulso: Generate Interceptor Here",
+    "Pulso: Generate Resolver Here",
+  ]);
+  for (const command of Object.values(commands)) {
+    assert.match(command, /\$\{selectedFile\}/);
+    assert.match(command, /generate-selected/);
+    assert.doesNotMatch(command, /\$\{input\}/);
+  }
+  assert.equal(
+    workspace.extensions.recommendations.includes(
+      "edonet.vscode-command-runner",
+    ),
+    true,
   );
 });
 

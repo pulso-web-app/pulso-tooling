@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,34 +9,35 @@ export const TOOLING_ROOT = path.resolve(
 
 export const PULSO_ROOT = path.dirname(TOOLING_ROOT);
 
-export const PROJECTS = Object.freeze({
-  shell: Object.freeze({
-    key: "shell",
-    folder: "pulso-shell",
-    nxProject: "shell",
-    e2eProject: "shell-e2e",
-    port: 4200,
-    repository: "https://github.com/pulso-web-app/pulso-shell.git",
-  }),
-  crm: Object.freeze({
-    key: "crm",
-    folder: "pulso-crm",
-    nxProject: "crm",
-    e2eProject: "crm-e2e",
-    port: 4201,
-    repository: "https://github.com/pulso-web-app/pulso-crm.git",
-  }),
-  projects: Object.freeze({
-    key: "projects",
-    folder: "pulso-projects",
-    nxProject: "projects",
-    e2eProject: "projects-e2e",
-    port: 4202,
-    repository: "https://github.com/pulso-web-app/pulso-projects.git",
-  }),
-});
+export const REGISTRY_PATH = path.join(TOOLING_ROOT, "pulso.repositories.json");
 
-export const PROJECT_LIST = Object.freeze(Object.values(PROJECTS));
+export function readRepositoryRegistry(registryPath = REGISTRY_PATH) {
+  const registry = JSON.parse(readFileSync(registryPath, "utf8"));
+  if (registry.version !== 1 || !Array.isArray(registry.repositories)) {
+    throw new Error("pulso.repositories.json must use registry version 1.");
+  }
+  const keys = new Set();
+  const ports = new Set();
+  for (const repository of registry.repositories) {
+    if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(repository.key)) {
+      throw new Error(`Invalid repository key: ${repository.key}`);
+    }
+    if (keys.has(repository.key) || ports.has(repository.port)) {
+      throw new Error(`Duplicate repository key or port: ${repository.key}`);
+    }
+    keys.add(repository.key);
+    ports.add(repository.port);
+  }
+  return registry;
+}
+
+export const REPOSITORY_REGISTRY = readRepositoryRegistry();
+export const PROJECT_LIST = Object.freeze(
+  REPOSITORY_REGISTRY.repositories.map((project) => Object.freeze(project)),
+);
+export const PROJECTS = Object.freeze(
+  Object.fromEntries(PROJECT_LIST.map((project) => [project.key, project])),
+);
 
 export const GENERATORS = Object.freeze([
   "component",

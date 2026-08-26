@@ -56,27 +56,27 @@ Each application keeps its own Git history, Nx configuration, package lock, `nod
 
 ## Public commands
 
-| Command | Purpose |
-| --- | --- |
-| `npm run setup` | Validate prerequisites, clone missing apps, and run `npm ci` in each app. |
-| `npm run doctor` | Check Node, npm, Git, app folders, origins, Nx binaries, and ports 4200–4202. |
-| `npm run open` | Open `pulso.code-workspace`. |
-| `npm run dev` | Serve all three apps concurrently. |
-| `npm run dev:shell` | Serve only the shell. |
-| `npm run dev:crm` | Serve only CRM. |
-| `npm run dev:projects` | Serve only Projects. |
-| `npm run build` | Build all applications. |
-| `npm run lint` | Lint all applications. |
-| `npm run test` | Run tooling's `node:test` suite. |
-| `npm run test:apps` | Run unit tests in all applications. |
-| `npm run e2e` | Run all application E2E suites sequentially to isolate their development servers. |
-| `npm run docs:check` | Validate authored tooling documentation. |
-| `npm run docs:check:apps` | Validate authored documentation in all apps. |
-| `npm run spec:validate` | Strictly validate tooling OpenSpec artifacts. |
-| `npm run spec:validate:apps` | Strictly validate app OpenSpec artifacts. |
-| `npm run agent:sync` | Mirror canonical `pulso-*` Skills in every available sibling repository. |
-| `npm run agent:check` | Detect required-file, adapter, or Skill-mirror drift. |
-| `npm run check` | Run local agent/docs/spec/tests, then each app's full check. |
+| Command                      | Purpose                                                                           |
+| ---------------------------- | --------------------------------------------------------------------------------- |
+| `npm run setup`              | Validate prerequisites, clone missing apps, and run `npm ci` in each app.         |
+| `npm run doctor`             | Check Node, npm, Git, app folders, origins, Nx binaries, and ports 4200–4202.     |
+| `npm run open`               | Open `pulso.code-workspace`.                                                      |
+| `npm run dev`                | Serve all three apps concurrently.                                                |
+| `npm run dev:shell`          | Serve only the shell.                                                             |
+| `npm run dev:crm`            | Serve only CRM.                                                                   |
+| `npm run dev:projects`       | Serve only Projects.                                                              |
+| `npm run build`              | Build all applications.                                                           |
+| `npm run lint`               | Lint all applications.                                                            |
+| `npm run test`               | Run tooling's `node:test` suite.                                                  |
+| `npm run test:apps`          | Run unit tests in all applications.                                               |
+| `npm run e2e`                | Run all application E2E suites sequentially to isolate their development servers. |
+| `npm run docs:check`         | Validate authored tooling documentation.                                          |
+| `npm run docs:check:apps`    | Validate authored documentation in all apps.                                      |
+| `npm run spec:validate`      | Strictly validate tooling OpenSpec artifacts.                                     |
+| `npm run spec:validate:apps` | Strictly validate app OpenSpec artifacts.                                         |
+| `npm run agent:sync`         | Mirror canonical `pulso-*` Skills in every available sibling repository.          |
+| `npm run agent:check`        | Detect required-file, adapter, or Skill-mirror drift.                             |
+| `npm run check`              | Run local agent/docs/spec/tests, then each app's full check.                      |
 
 Aggregate commands keep output identified by repository and return failure when any child fails. Interrupting an aggregate development command propagates termination to descendant processes, including Windows Nx process trees.
 
@@ -129,6 +129,23 @@ If a file is selected, its parent folder is used. The helper accepts a logical n
 
 The predefined commands support component, service, guard, directive, pipe, interceptor, and resolver. The original native tasks, `Pulso: Generate Component Here` and `Pulso: Generate Angular Artifact Here`, remain available through **Tasks: Run Task** and use the active file as their target.
 
+## Architecture generators
+
+The Explorer also exposes three guided commands:
+
+- **Pulso: Create Library Here** creates the canonical `libs/<capability>/<type>` Nx project. Domain and util libraries can be Angular or framework-independent TypeScript.
+- **Pulso: Create Feature Here** creates either a vertical slice in the selected feature library or a new capability with its own feature library and lazy route.
+- **Pulso: Initialize Repository Here** creates a complete sibling Native Federation remote from Tooling in a checked staging directory before registering it.
+
+Every command validates names and collisions, prints a preview, and asks for confirmation. Automation uses the same CLI with complete flags, `--yes`, and optional `--dry-run`:
+
+```bash
+node src/cli.mjs create-selected library ../pulso-crm --capability contacts --type domain --runtime typescript --yes --dry-run
+node src/cli.mjs create-selected feature ../pulso-crm/libs/contacts/feature/src/lib --mode slice --name import-contacts --routed false --yes
+```
+
+`pulso.repositories.json` is the source of truth for known repositories and Shell remote metadata. Initialization intentionally does not create an origin, GitHub repository, Firebase site, secrets, commit, or push.
+
 Command Runner executes configured terminal commands by design. Use these entries only from a trusted Pulso workspace and review any future command changes before accepting them.
 
 ## Agent-ready workflow
@@ -146,11 +163,11 @@ The supported OpenSpec workflow is:
 
 Tool integrations generated by OpenSpec include:
 
-| Tool | Example proposal entry point |
-| --- | --- |
-| Codex | `$openspec-propose` |
-| Claude Code | `/opsx:propose` |
-| GitHub Copilot | `/opsx-propose` |
+| Tool           | Example proposal entry point |
+| -------------- | ---------------------------- |
+| Codex          | `$openspec-propose`          |
+| Claude Code    | `/opsx:propose`              |
+| GitHub Copilot | `/opsx-propose`              |
 
 Use `npm run spec:update` after upgrading OpenSpec rather than editing generated integrations.
 
@@ -166,7 +183,7 @@ Specifications grow from real changes. The repositories do not attempt to backfi
 
 ## Troubleshooting
 
-- **Unexpected origin:** inspect `git remote -v` in the named repository. Tooling will not rewrite it.
+- **Unexpected origin:** inspect `git remote -v` in the named repository. A missing origin produces an actionable warning for a generated repository; a mismatched origin remains an error.
 - **Port already in use:** stop the owning task or process, then rerun `npm run doctor`.
 - **A development task leaves processes behind:** use `Pulso: Stop All Tasks`; if the terminal was killed externally, rerun the doctor and terminate the specific process tree.
 - **Agent Skill drift:** run `npm run agent:sync`, review the generated mirrors, then run `npm run agent:check`.

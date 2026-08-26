@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { Readable, Writable } from "node:stream";
 
 import {
   PROJECT_LIST,
@@ -27,6 +28,22 @@ import {
   resolveGeneratorContext,
   resolveSelectedTarget,
 } from "../src/lib.mjs";
+import {
+  assertKebabCase,
+  buildLibraryNxArguments,
+  buildLibraryPlan,
+  insertLazyRoute,
+} from "../src/architecture.mjs";
+import { createPrompter, parseFlags } from "../src/prompts.mjs";
+import {
+  renderFederationManifest,
+  renderRemoteRegistry,
+} from "../src/registry.mjs";
+import {
+  nextAvailablePort,
+  renderRepositoryTemplate,
+  validateRepositoryOptions,
+} from "../src/repository.mjs";
 
 test("accepts only the Node.js ranges supported by Angular 22", () => {
   assert.equal(isSupportedNodeVersion("v22.22.3"), true);
@@ -229,19 +246,233 @@ test("references only existing workspace tasks and safe generator commands", asy
     "Pulso: Generate Interceptor Here": "interceptor",
     "Pulso: Generate Resolver Here": "resolver",
   };
-  assert.deepEqual(Object.keys(commands), Object.keys(expectedGenerators));
+  assert.deepEqual(
+    Object.keys(commands).slice(0, 7),
+    Object.keys(expectedGenerators),
+  );
   for (const [label, generator] of Object.entries(expectedGenerators)) {
     const command = commands[label];
     assert.match(command, /\$\{selectedFile\}/);
     assert.match(command, new RegExp(`generate-selected ${generator}`));
     assert.doesNotMatch(command, /\$\{input\}/);
   }
+  assert.match(
+    commands["Pulso: Create Library Here"],
+    /create-selected library/,
+  );
+  assert.match(
+    commands["Pulso: Create Feature Here"],
+    /create-selected feature/,
+  );
+  assert.match(
+    commands["Pulso: Initialize Repository Here"],
+    /create-selected repository/,
+  );
   assert.equal(
     workspace.extensions.recommendations.includes(
       "edonet.vscode-command-runner",
     ),
     true,
   );
+});
+
+test("builds canonical Angular and TypeScript library plans", () => {
+  const angular = buildLibraryPlan(PROJECTS.crm, {
+    capability: "sales-pipeline",
+    type: "data-access",
+  });
+  assert.equal(angular.directory, "libs/sales-pipeline/data-access");
+  assert.equal(angular.projectName, "sales-pipeline-data-access");
+  assert.equal(angular.alias, "@pulso-crm/sales-pipeline-data-access");
+  assert.deepEqual(angular.tags, ["scope:sales-pipeline", "type:data-access"]);
+  assert.deepEqual(buildLibraryNxArguments(angular).slice(0, 3), [
+    "generate",
+    "@nx/angular:library",
+    "libs/sales-pipeline/data-access",
+  ]);
+
+  const pure = buildLibraryPlan(PROJECTS.projects, {
+    capability: "planning",
+    type: "domain",
+    runtime: "typescript",
+  });
+  assert.match(
+    buildLibraryNxArguments(pure).join(" "),
+    /@nx\/js:library.*--bundler=tsc.*--unitTestRunner=vitest/,
+  );
+  assert.throws(() => assertKebabCase("Sales Pipeline"), /kebab-case/);
+  for (const type of ["data-access", "domain", "ui", "util"]) {
+    for (const runtime of ["angular", "typescript"]) {
+      if (!["domain", "util"].includes(type) && runtime === "typescript")
+        continue;
+      const plan = buildLibraryPlan(PROJECTS.crm, {
+        capability: "sales",
+        type,
+        runtime,
+      });
+      assert.equal(plan.directory, `libs/sales/${type}`);
+      assert.equal(plan.runtime, runtime);
+    }
+  }
+});
+
+test("parses automation flags without changing positional arguments", () => {
+  assert.deepEqual(
+    parseFlags([
+      "target",
+      "--capability",
+      "sales",
+      "--dry-run",
+      "--runtime=typescript",
+    ]),
+    {
+      positional: ["target"],
+      flags: { capability: "sales", "dry-run": true, runtime: "typescript" },
+    },
+  );
+});
+
+test("supports numbered prompts and explicit cancellation", async () => {
+  let output = "";
+  const selectionPrompt = createPrompter({
+    input: Readable.from(["2\n"]),
+    output: new Writable({
+      write(chunk, _encoding, callback) {
+        output += chunk.toString();
+        callback();
+      },
+    }),
+  });
+  try {
+    assert.equal(
+      await selectionPrompt.select("Runtime", [
+        { label: "Angular", value: "angular" },
+        { label: "TypeScript", value: "typescript" },
+      ]),
+      "typescript",
+    );
+    assert.match(output, /1\. Angular/);
+  } finally {
+    selectionPrompt.close();
+  }
+  const confirmationPrompt = createPrompter({
+    input: Readable.from(["n\n"]),
+    output: new Writable({ write(_chunk, _encoding, callback) { callback(); } }),
+  });
+  try {
+    assert.equal(await confirmationPrompt.confirm("Apply?"), false);
+  } finally {
+    confirmationPrompt.close();
+  }
+});
+
+test("inserts static lazy routes before parameter and wildcard routes", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "pulso-route-test-"));
+  const routeFile = path.join(root, "sample.routes.ts");
+  try {
+    await writeFile(
+      routeFile,
+      "import { Routes } from '@angular/router';\nexport const ROUTES: Routes = [{ path: ':id', loadComponent: async () => null }, { path: '**', loadComponent: async () => null }];\n",
+    );
+    await insertLazyRoute({
+      workspace: projectRoot(PROJECTS.crm),
+      routesFile: routeFile,
+      routePath: "new",
+      title: "New",
+      importPath: "./new.component",
+      exportName: "NewComponent",
+    });
+    const source = await readFile(routeFile, "utf8");
+    assert.ok(source.indexOf("path: 'new'") < source.indexOf("path: ':id'"));
+    await assert.rejects(
+      () =>
+        insertLazyRoute({
+          workspace: projectRoot(PROJECTS.crm),
+          routesFile: routeFile,
+          routePath: "new",
+          title: "New",
+          importPath: "./new.component",
+          exportName: "NewComponent",
+        }),
+      /already exists/,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("renders Shell remotes and validates repository ports", () => {
+  const registry = {
+    repositories: [PROJECTS.shell, PROJECTS.crm, PROJECTS.projects],
+  };
+  assert.match(renderRemoteRegistry(registry), /REMOTE_ROUTES|PULSO_REMOTES/);
+  assert.equal(
+    renderFederationManifest(registry, "development").crm,
+    "http://localhost:4201/remoteEntry.json",
+  );
+  assert.equal(nextAvailablePort(), 4203);
+  assert.throws(
+    () =>
+      validateRepositoryOptions({
+        key: "crm",
+        displayName: "CRM",
+        capability: "sales",
+        routePath: "sales",
+        routeTitle: "Sales",
+        icon: "dashboard",
+        port: 4300,
+        repository: "https://github.com/pulso-web-app/pulso-crm.git",
+        firebaseProject: "pulso-web-app",
+        firebaseTarget: "crm",
+        firebaseSite: "pulso-web-app-crm",
+        publicUrl: "https://pulso-web-app-crm.web.app",
+      }),
+    /already registered/,
+  );
+});
+
+test("renders a complete remote template without unresolved tokens", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "pulso-remote-template-"));
+  try {
+    await renderRepositoryTemplate(root, {
+      key: "billing",
+      displayName: "Billing",
+      capability: "invoices",
+      routePath: "billing",
+      routeTitle: "Billing",
+      icon: "receipt",
+      showInNavigation: true,
+      port: 4203,
+      repository: "https://github.com/pulso-web-app/pulso-billing.git",
+      firebaseProject: "pulso-web-app",
+      firebaseTarget: "billing",
+      firebaseSite: "pulso-web-app-billing",
+      publicUrl: "https://pulso-web-app-billing.web.app",
+    });
+    assert.equal(
+      existsSync(path.join(root, "apps", "billing", "federation.config.mjs")),
+      true,
+    );
+    assert.equal(
+      existsSync(
+        path.join(root, "libs", "invoices", "feature", "project.json"),
+      ),
+      true,
+    );
+    assert.match(
+      await readFile(
+        path.join(root, "libs", "invoices", "feature", "src", "index.ts"),
+        "utf8",
+      ),
+      /INVOICES_ROUTES/,
+    );
+    assert.doesNotMatch(
+      await readFile(path.join(root, "tsconfig.base.json"), "utf8"),
+      /projects-feature-placeholder|__PULSO_/,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 async function createAgentFixture() {

@@ -20,6 +20,14 @@ Setup validates tools and known origins, clones only missing repositories, and r
 
 The generator helper accepts either an explicit active-file context from a native VS Code task or a resource selected through Command Runner. For an Explorer selection, it infers the owning known repository and treats a selected file as its parent directory. It accepts only the composition root at `apps/<app>/src/app` or the `src/lib` tree of a library backed by an Nx `project.json`. It rejects traversal and absolute artifact names, normalizes accidental suffixes, and invokes the repository-local Nx binary. This keeps the convenience commands compatible with feature-first libraries without allowing generation in arbitrary folders.
 
+Architecture generators add a separate planning layer. Library and feature plans derive paths, aliases, tags, routes, and runtimes before Nx runs. Repository plans render from `templates/remote-repository` into a command-owned temporary sibling, install dependencies, refresh OpenSpec adapters, synchronize Skills, and run the repository check before an atomic move. Registration happens only after the local scaffold passes.
+
+## Declarative registries
+
+`pulso.repositories.json` drives repository discovery, aggregate commands, per-repository development scripts, the multi-root workspace, and Shell remote metadata. Each app's `architecture.config.json` drives its Nx scope constraints, so creating a capability does not require editing ESLint source. Type constraints remain fixed and preserve the feature-to-lower-layer dependency direction.
+
+The Shell consumes a generated TypeScript remote registry and generated development/production federation manifests. Remotes expose `REMOTE_ROUTES`; existing named route constants remain compatibility aliases.
+
 ## Agent configuration
 
 The root and scoped `AGENTS.md` files are authoritative. Each repository stores canonical curated Skills in `.agents/skills/pulso-*`. Synchronization mirrors those directories to Claude and Copilot layouts by content, while OpenSpec-owned names and integration directories are never modified.

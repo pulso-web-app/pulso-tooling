@@ -19,6 +19,8 @@ This repository coordinates developer experience across four independent reposit
 - Generators must use each app's local Nx binary and target only the app composition root or a real Nx library's `src/lib` tree; reject absolute paths and traversal.
 - Preserve the distinction between independent repositories, internal Nx projects, and runtime microfrontends in orchestration and documentation.
 - Canonical Pulso Skills live in `.agents/skills`; mirrors are generated, not hand-edited.
+- Treat `pulso.repositories.json` as the repository source of truth and regenerate workspace/Shell artifacts deterministically.
+- Architecture generators must preview mutations, support `--dry-run` and `--yes`, reject collisions, and never provision external resources.
 
 ## Commands
 

@@ -15,4 +15,6 @@ description: Coordinate one Pulso change across tooling, shell, CRM, and Project
 8. Run each repository's strict spec validation and checks, then run the tooling aggregate checks.
 9. Archive the app changes after their validations pass, then archive the tooling umbrella change.
 
+For architecture creation, prefer the Tooling commands over assembling Nx arguments by hand. Review their preview before confirmation. Treat `architecture.config.json` and `pulso.repositories.json` as authored registries; treat the Shell remote source, manifests, and multi-root workspace as deterministic generated outputs. A new remote is not complete until its local scaffold passes, while GitHub, Firebase resources, secrets, commit, and push remain explicit external steps.
+
 Never pull, switch branches, discard work, expose secrets, edit generated OpenSpec integrations, or deploy without explicit approval.

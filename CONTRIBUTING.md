@@ -22,6 +22,8 @@ Setup may clone a missing known repository and run `npm ci`. It may not pull, sw
 
 Artifact generators may target only a known app composition root or the `src/lib` tree of a real Nx project. Preserve all existing convenience commands when feature-first source locations evolve.
 
+Architecture generators must keep validation and planning pure, use atomic structured writes, and cover interactive, flag, confirmation, cancellation, and dry-run behavior. Never overwrite a project, alias, route, repository, or registry entry. Repository initialization may remove only its validated staging directory after failure and must leave external provisioning to the developer.
+
 ## Pull requests
 
 Link the OpenSpec change, identify every affected repository, and include Windows plus POSIX considerations for process behavior. Provide test evidence, task/workspace impact, compatibility notes, and rollback considerations. Never include local absolute paths, credentials, private repository URLs, or user data.

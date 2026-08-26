@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "repositories": [
+    {
+      "key": "shell",
+      "displayName": "Shell",
+      "folder": "pulso-shell",
+      "kind": "host",
+      "nxProject": "shell",
+      "e2eProject": "shell-e2e",
+      "port": 4200,
+      "repository": "https://github.com/pulso-web-app/pulso-shell.git"
+    },
+    {
+      "key": "crm",
+      "displayName": "CRM",
+      "folder": "pulso-crm",
+      "kind": "remote",
+      "nxProject": "crm",
+      "e2eProject": "crm-e2e",
+      "port": 4201,
+      "repository": "https://github.com/pulso-web-app/pulso-crm.git",
+      "routePath": "crm",
+      "routeTitle": "CRM",
+      "icon": "dashboard",
+      "showInNavigation": true,
+      "defaultRemote": true,
+      "developmentRemoteEntry": "http://localhost:4201/remoteEntry.json",
+      "productionRemoteEntry": "https://pulso-web-app-crm.web.app/remoteEntry.json"
+    },
+    {
+      "key": "projects",
+      "displayName": "Projects",
+      "folder": "pulso-projects",
+      "kind": "remote",
+      "nxProject": "projects",
+      "e2eProject": "projects-e2e",
+      "port": 4202,
+      "repository": "https://github.com/pulso-web-app/pulso-projects.git",
+      "routePath": "projects",
+      "routeTitle": "Projects",
+      "icon": "folder",
+      "showInNavigation": true,
+      "defaultRemote": false,
+      "developmentRemoteEntry": "http://localhost:4202/remoteEntry.json",
+      "productionRemoteEntry": "https://pulso-web-app-projects.web.app/remoteEntry.json"
+    }
+  ]
+}

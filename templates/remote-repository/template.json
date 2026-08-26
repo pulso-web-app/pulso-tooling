@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "referenceRepository": "pulso-projects",
+  "tokens": [
+    "__PULSO_KEY__",
+    "__PULSO_DISPLAY_NAME__",
+    "__PULSO_CAPABILITY__",
+    "__PULSO_PORT__",
+    "__PULSO_FIREBASE_PROJECT__",
+    "__PULSO_FIREBASE_TARGET__",
+    "__PULSO_FIREBASE_SITE__"
+  ],
+  "excludedDirectories": [".git", ".nx", "dist", "node_modules"]
+}

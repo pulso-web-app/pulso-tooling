@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@fission-ai/openspec": "1.10.0",
-    "markdownlint-cli2": "0.23.2"
+    "markdownlint-cli2": "0.23.2",
+    "typescript": "6.0.3"
   }
 }

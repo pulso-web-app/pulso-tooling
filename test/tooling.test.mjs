@@ -375,7 +375,7 @@ test("inserts static lazy routes before parameter and wildcard routes", async ()
       "import { Routes } from '@angular/router';\nexport const ROUTES: Routes = [{ path: ':id', loadComponent: async () => null }, { path: '**', loadComponent: async () => null }];\n",
     );
     await insertLazyRoute({
-      workspace: projectRoot(PROJECTS.crm),
+      workspace: TOOLING_ROOT,
       routesFile: routeFile,
       routePath: "new",
       title: "New",
@@ -387,7 +387,7 @@ test("inserts static lazy routes before parameter and wildcard routes", async ()
     await assert.rejects(
       () =>
         insertLazyRoute({
-          workspace: projectRoot(PROJECTS.crm),
+          workspace: TOOLING_ROOT,
           routesFile: routeFile,
           routePath: "new",
           title: "New",

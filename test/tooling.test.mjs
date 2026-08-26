@@ -78,7 +78,7 @@ test("rejects absolute paths and directory traversal", () => {
   );
 });
 
-test("restricts generation to the matching application source root", () => {
+test("restricts generation to an application or Nx library source root", () => {
   const shellRoot = projectRoot(PROJECTS.shell);
   const validTarget = path.join(
     shellRoot,
@@ -90,11 +90,37 @@ test("restricts generation to the matching application source root", () => {
   );
   const context = resolveGeneratorContext(validTarget, shellRoot);
   assert.equal(context.project.key, "shell");
+  assert.equal(context.sourceKind, "app");
+  assert.equal(context.sourceRoot, context.appSource);
   assert.equal(isPathInside(validTarget, context.appSource), true);
+
+  const libraryTarget = path.join(
+    shellRoot,
+    "libs",
+    "auth",
+    "feature",
+    "src",
+    "lib",
+    "login",
+  );
+  const libraryContext = resolveGeneratorContext(libraryTarget, shellRoot);
+  assert.equal(libraryContext.sourceKind, "library");
+  assert.equal(
+    libraryContext.sourceRoot,
+    path.join(shellRoot, "libs", "auth", "feature", "src", "lib"),
+  );
 
   assert.throws(
     () => resolveGeneratorContext(path.join(shellRoot, "tools"), shellRoot),
     /Select a folder or file inside/,
+  );
+  assert.throws(
+    () =>
+      resolveGeneratorContext(
+        path.join(shellRoot, "libs", "auth", "feature", "src"),
+        shellRoot,
+      ),
+    /Nx library's src\/lib/,
   );
 });
 

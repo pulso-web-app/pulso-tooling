@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 
@@ -130,13 +130,49 @@ export function resolveGeneratorContext(targetDirectory, workspaceDirectory) {
     "app",
   );
 
-  if (!isPathInside(target, appSource)) {
-    throw new Error(
-      `Select a folder or file inside apps/${project.nxProject}/src/app before generating an artifact.`,
-    );
+  if (isPathInside(target, appSource)) {
+    return {
+      project,
+      target,
+      workspace,
+      sourceRoot: appSource,
+      sourceKind: "app",
+      appSource,
+    };
   }
 
-  return { project, target, workspace, appSource };
+  const librariesRoot = path.join(workspace, "libs");
+  if (isPathInside(target, librariesRoot)) {
+    let candidate = target;
+
+    while (isPathInside(candidate, librariesRoot)) {
+      const isLibrarySourceRoot =
+        path.basename(candidate) === "lib" &&
+        path.basename(path.dirname(candidate)) === "src";
+
+      if (isLibrarySourceRoot) {
+        const libraryRoot = path.dirname(path.dirname(candidate));
+        if (existsSync(path.join(libraryRoot, "project.json"))) {
+          return {
+            project,
+            target,
+            workspace,
+            sourceRoot: candidate,
+            sourceKind: "library",
+            appSource,
+          };
+        }
+      }
+
+      const parent = path.dirname(candidate);
+      if (parent === candidate) break;
+      candidate = parent;
+    }
+  }
+
+  throw new Error(
+    `Select a folder or file inside apps/${project.nxProject}/src/app or an Nx library's src/lib before generating an artifact.`,
+  );
 }
 
 export function aggregateExitCodes(codes) {

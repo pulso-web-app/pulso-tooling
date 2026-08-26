@@ -120,12 +120,12 @@ Keybindings are VS Code user configuration and cannot be distributed as workspac
 
 Install the recommended Command Runner extension, reload VS Code, and use this primary workflow:
 
-1. Right-click a folder or file inside an application's `apps/<app>/src/app` tree.
+1. Right-click a folder or file inside an application's `apps/<app>/src/app` tree or an Nx library's `libs/**/src/lib` tree.
 2. Select **Run Command**.
 3. Choose one of the predefined `Pulso: Generate ... Here` commands.
 4. Enter the logical artifact name in the **Pulso Generators** terminal and press Enter.
 
-If a file is selected, its parent folder is used. The helper accepts a logical name such as `contact-card` or `cards/contact-card`, finds the owning Nx workspace from the selected resource, uses its local Nx binary, and applies that repository's generator defaults. Absolute paths, `..`, paths outside the application source, and duplicate suffixes such as `.component.component.ts` are rejected or normalized safely.
+If a file is selected, its parent folder is used. The helper accepts a logical name such as `contact-card` or `cards/contact-card`, finds the owning Nx workspace from the selected resource, uses its local Nx binary, and applies that repository's generator defaults. A library target is accepted only when its project has a real `project.json`. Absolute paths, `..`, paths outside recognized source roots, and duplicate suffixes such as `.component.component.ts` are rejected or normalized safely.
 
 The predefined commands support component, service, guard, directive, pipe, interceptor, and resolver. The original native tasks, `Pulso: Generate Component Here` and `Pulso: Generate Angular Artifact Here`, remain available through **Tasks: Run Task** and use the active file as their target.
 
@@ -173,7 +173,7 @@ Specifications grow from real changes. The repositories do not attempt to backfi
 - **OpenSpec integration drift:** run `npm run spec:update` in the affected repository.
 - **Run Command is missing:** confirm `edonet.vscode-command-runner` is enabled, then run **Developer: Reload Window**.
 - **Pulso generator commands are missing:** reopen `pulso.code-workspace`; opening one repository alone does not load the shared workspace settings.
-- **Generator refuses the selected resource:** select a folder or file below `apps/<app>/src/app` in Shell, CRM, or Projects.
+- **Generator refuses the selected resource:** select a folder or file below `apps/<app>/src/app` or a real Nx library's `libs/**/src/lib` tree in Shell, CRM, or Projects.
 - **Playwright browser missing:** run `npm exec playwright install` in the affected app.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architecture.md).

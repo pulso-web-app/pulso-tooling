@@ -1,9 +1,4 @@
-# context-menu-generators Specification
-
-## Purpose
-Defines safe Angular artifact generation from resources selected in the VS Code Explorer.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Explorer context-menu generation
 
@@ -13,15 +8,6 @@ The Pulso multi-root workspace SHALL recommend and configure an existing VS Code
 
 - **WHEN** a developer right-clicks a folder below an application's `apps/<app>/src/app` composition root or a project's `libs/**/src/lib` feature-first source root, chooses a Pulso generator command, and provides a valid logical name
 - **THEN** the tooling executes the corresponding local Nx generator in that folder with the repository defaults
-
-### Requirement: Selected-resource ownership
-
-The generator helper SHALL infer Shell, CRM, or Projects ownership from the selected path, treat a selected file as its parent directory, and SHALL NOT depend on the active editor to choose the Nx workspace.
-
-#### Scenario: Active editor and selected folder belong to different repositories
-
-- **WHEN** the active editor belongs to one Pulso repository and the selected Explorer resource belongs to another
-- **THEN** generation targets the repository and directory containing the selected resource
 
 ### Requirement: Context-menu safety
 

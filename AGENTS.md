@@ -16,7 +16,8 @@ This repository coordinates developer experience across four independent reposit
 
 - Tooling may orchestrate public npm scripts but must not import application source code.
 - Cross-platform process cleanup must include descendant Nx and browser-builder processes.
-- Generators must use each app's local Nx binary and reject absolute paths or traversal.
+- Generators must use each app's local Nx binary and target only the app composition root or a real Nx library's `src/lib` tree; reject absolute paths and traversal.
+- Preserve the distinction between independent repositories, internal Nx projects, and runtime microfrontends in orchestration and documentation.
 - Canonical Pulso Skills live in `.agents/skills`; mirrors are generated, not hand-edited.
 
 ## Commands

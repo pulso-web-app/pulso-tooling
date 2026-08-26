@@ -18,7 +18,7 @@ Setup validates tools and known origins, clones only missing repositories, and r
 
 ## Generator safety
 
-The generator helper accepts either an explicit active-file context from a native VS Code task or a resource selected through Command Runner. For an Explorer selection, it infers the owning known repository and treats a selected file as its parent directory. It resolves the app source root, rejects traversal and absolute artifact names, normalizes accidental suffixes, and invokes the local Nx binary. It never guesses a target outside `apps/<app>/src/app`.
+The generator helper accepts either an explicit active-file context from a native VS Code task or a resource selected through Command Runner. For an Explorer selection, it infers the owning known repository and treats a selected file as its parent directory. It accepts only the composition root at `apps/<app>/src/app` or the `src/lib` tree of a library backed by an Nx `project.json`. It rejects traversal and absolute artifact names, normalizes accidental suffixes, and invokes the repository-local Nx binary. This keeps the convenience commands compatible with feature-first libraries without allowing generation in arbitrary folders.
 
 ## Agent configuration
 

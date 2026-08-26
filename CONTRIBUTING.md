@@ -11,7 +11,7 @@ Use a reviewed OpenSpec change for non-trivial tooling behavior. For work spanni
 1. Run `npm ci`.
 2. Run `npm run doctor` when the sibling repositories are present.
 3. Explore current CLI behavior and tests.
-4. Specify safety boundaries, platform behavior, failure aggregation, and non-goals.
+4. Specify safety boundaries, platform behavior, failure aggregation, repository/Nx-project/MFE ownership, and non-goals.
 5. Implement deterministic logic outside the CLI boundary and cover it with `node:test`.
 6. Run `npm run docs:check`, `npm run spec:validate`, `npm run agent:check`, and `npm test`.
 7. Run `npm run check` when all application repositories are available.
@@ -19,6 +19,8 @@ Use a reviewed OpenSpec change for non-trivial tooling behavior. For work spanni
 ## Safety expectations
 
 Setup may clone a missing known repository and run `npm ci`. It may not pull, switch branches, reset, overwrite existing directories, or rewrite origins. Filesystem mutations and process termination must use explicit verified targets and remain cross-platform.
+
+Artifact generators may target only a known app composition root or the `src/lib` tree of a real Nx project. Preserve all existing convenience commands when feature-first source locations evolve.
 
 ## Pull requests
 

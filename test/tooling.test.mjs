@@ -431,24 +431,75 @@ test("renders Shell remotes and validates repository ports", () => {
   );
 });
 
+async function createRemoteSourceFixture() {
+  const root = await mkdtemp(path.join(os.tmpdir(), "pulso-remote-source-"));
+  const files = {
+    "firebase.json": JSON.stringify({
+      hosting: {
+        target: "projects",
+        public: "dist/apps/projects/browser",
+      },
+    }),
+    "tsconfig.base.json": JSON.stringify({
+      compilerOptions: {
+        paths: {
+          "@pulso-projects/projects-feature-placeholder": [
+            "./libs/projects/feature-placeholder/src/index.ts",
+          ],
+        },
+      },
+    }),
+    "apps/projects/federation.config.mjs": "export default {};\n",
+    "apps/projects/project.json": JSON.stringify({
+      name: "projects",
+      tags: ["scope:projects", "type:app"],
+      targets: {
+        "serve-original": { options: { port: 4202 } },
+      },
+    }),
+    "apps/projects/src/app/remote-entry/remote-entry.routes.ts":
+      "export const REMOTE_ROUTES = [];\n",
+    "libs/projects/feature-placeholder/project.json": JSON.stringify({
+      name: "projects-feature-placeholder",
+      sourceRoot: "libs/projects/feature-placeholder/src",
+      tags: ["scope:projects", "type:feature"],
+    }),
+    "libs/projects/feature-placeholder/src/index.ts":
+      "export { PROJECTS_ROUTES } from './lib/projects.routes';\n",
+    "libs/projects/feature-placeholder/src/lib/projects-placeholder/projects-placeholder.component.ts":
+      "export class ProjectsPlaceholderComponent {}\n",
+  };
+  for (const [relative, contents] of Object.entries(files)) {
+    const target = path.join(root, relative);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, contents, "utf8");
+  }
+  return root;
+}
+
 test("renders a complete remote template without unresolved tokens", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "pulso-remote-template-"));
+  const sourceRoot = await createRemoteSourceFixture();
   try {
-    await renderRepositoryTemplate(root, {
-      key: "billing",
-      displayName: "Billing",
-      capability: "invoices",
-      routePath: "billing",
-      routeTitle: "Billing",
-      icon: "receipt",
-      showInNavigation: true,
-      port: 4203,
-      repository: "https://github.com/pulso-web-app/pulso-billing.git",
-      firebaseProject: "pulso-web-app",
-      firebaseTarget: "billing",
-      firebaseSite: "pulso-web-app-billing",
-      publicUrl: "https://pulso-web-app-billing.web.app",
-    });
+    await renderRepositoryTemplate(
+      root,
+      {
+        key: "billing",
+        displayName: "Billing",
+        capability: "invoices",
+        routePath: "billing",
+        routeTitle: "Billing",
+        icon: "receipt",
+        showInNavigation: true,
+        port: 4203,
+        repository: "https://github.com/pulso-web-app/pulso-billing.git",
+        firebaseProject: "pulso-web-app",
+        firebaseTarget: "billing",
+        firebaseSite: "pulso-web-app-billing",
+        publicUrl: "https://pulso-web-app-billing.web.app",
+      },
+      { sourceRoot },
+    );
     assert.equal(
       existsSync(path.join(root, "apps", "billing", "federation.config.mjs")),
       true,
@@ -472,6 +523,7 @@ test("renders a complete remote template without unresolved tokens", async () =>
     );
   } finally {
     await rm(root, { recursive: true, force: true });
+    await rm(sourceRoot, { recursive: true, force: true });
   }
 });
 

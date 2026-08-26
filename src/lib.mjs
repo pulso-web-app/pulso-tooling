@@ -97,7 +97,11 @@ export function resolveSelectedTarget(targetPath) {
   }
 }
 
-export function resolveGeneratorContext(targetDirectory, workspaceDirectory) {
+export function resolveGeneratorContext(
+  targetDirectory,
+  workspaceDirectory,
+  { fileExists = existsSync } = {},
+) {
   const selected = path.resolve(targetDirectory);
   const target = resolveSelectedTarget(selected);
 
@@ -152,7 +156,7 @@ export function resolveGeneratorContext(targetDirectory, workspaceDirectory) {
 
       if (isLibrarySourceRoot) {
         const libraryRoot = path.dirname(path.dirname(candidate));
-        if (existsSync(path.join(libraryRoot, "project.json"))) {
+        if (fileExists(path.join(libraryRoot, "project.json"))) {
           return {
             project,
             target,

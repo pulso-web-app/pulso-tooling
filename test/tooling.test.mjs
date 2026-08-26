@@ -103,11 +103,27 @@ test("restricts generation to an application or Nx library source root", () => {
     "lib",
     "login",
   );
-  const libraryContext = resolveGeneratorContext(libraryTarget, shellRoot);
+  const libraryProjectFile = path.join(
+    shellRoot,
+    "libs",
+    "auth",
+    "feature",
+    "project.json",
+  );
+  const libraryContext = resolveGeneratorContext(libraryTarget, shellRoot, {
+    fileExists: (candidate) => candidate === libraryProjectFile,
+  });
   assert.equal(libraryContext.sourceKind, "library");
   assert.equal(
     libraryContext.sourceRoot,
     path.join(shellRoot, "libs", "auth", "feature", "src", "lib"),
+  );
+  assert.throws(
+    () =>
+      resolveGeneratorContext(libraryTarget, shellRoot, {
+        fileExists: () => false,
+      }),
+    /Nx library's src\/lib/,
   );
 
   assert.throws(

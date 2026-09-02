@@ -29,7 +29,8 @@
     "spec:update": "openspec update",
     "agent:sync": "node src/cli.mjs agent sync",
     "agent:check": "node src/cli.mjs agent check",
-    "check": "npm run docs:check && npm run spec:validate && npm run agent:check && npm test && node src/cli.mjs run check all"
+    "check": "npm run docs:check && npm run spec:validate && npm run agent:check && npm test && node src/cli.mjs run check all && npm run test:firebase-federation",
+    "test:firebase-federation": "node --experimental-vm-modules tools/check-firebase-federation.mjs"
   },
   "devDependencies": {
     "@fission-ai/openspec": "1.10.0",
